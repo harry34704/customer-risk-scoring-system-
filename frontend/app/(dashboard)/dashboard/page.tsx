@@ -24,6 +24,16 @@ export default async function DashboardPage({
     fetchUserProfile(),
     fetchServerJson<DashboardOverview>(`/dashboard/overview?mode=${mode}`)
   ]);
+  const normalizedOverview: DashboardOverview = {
+    is_empty: overview?.is_empty ?? true,
+    summary_cards: overview?.summary_cards ?? [],
+    risk_distribution: overview?.risk_distribution ?? [],
+    defaults_by_month: overview?.defaults_by_month ?? [],
+    recovery_by_segment: overview?.recovery_by_segment ?? [],
+    score_trend: overview?.score_trend ?? [],
+    recent_applicants: overview?.recent_applicants ?? [],
+    loss_watchlist: overview?.loss_watchlist ?? []
+  };
 
   return (
     <section className="pb-10">
@@ -38,7 +48,7 @@ export default async function DashboardPage({
       </div>
 
       <div className="mb-6 grid gap-4 xl:grid-cols-4">
-        {overview.summary_cards.map((card) => {
+        {normalizedOverview.summary_cards.map((card) => {
           const tooltipMap: Record<string, string> = {
             Applicants:
               "Total applicants currently scored inside your workspace. This is the base volume the rest of the dashboard is describing.",
@@ -61,7 +71,7 @@ export default async function DashboardPage({
         })}
       </div>
 
-      {overview.is_empty ? (
+      {normalizedOverview.is_empty ? (
         <WorkspaceBootstrapCard
           title="This workspace is ready, but it does not have any applicants yet."
           description="Load a demo portfolio to populate the dashboard with realistic applicant cohorts, payment behavior, explainable scores, and exportable reports. If you prefer, you can also import your own CSVs or create one applicant manually."
@@ -96,11 +106,11 @@ export default async function DashboardPage({
             </div>
           </Card>
 
-          <DashboardCharts overview={overview} />
+          <DashboardCharts overview={normalizedOverview} />
 
           <div className="mt-6 grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
-            <LossWatchlist items={overview.loss_watchlist} />
-            <RecentApplicants applicants={overview.recent_applicants} />
+            <LossWatchlist items={normalizedOverview.loss_watchlist} />
+            <RecentApplicants applicants={normalizedOverview.recent_applicants} />
           </div>
         </>
       )}

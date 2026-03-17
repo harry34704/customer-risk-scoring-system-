@@ -6,7 +6,9 @@ import { RiskBadge } from "@/components/ui/risk-badge";
 import { type DashboardOverview } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 
-export function LossWatchlist({ items }: { items: DashboardOverview["loss_watchlist"] }) {
+export function LossWatchlist({ items }: { items?: DashboardOverview["loss_watchlist"] }) {
+  const safeItems = items ?? [];
+
   return (
     <Card>
       <SectionHeading
@@ -15,9 +17,9 @@ export function LossWatchlist({ items }: { items: DashboardOverview["loss_watchl
         tooltip="Recovery gap equals the cumulative difference between amount due and amount paid. It surfaces where portfolio cash is being left on the table."
       />
 
-      {items.length ? (
+      {safeItems.length ? (
         <div className="space-y-3">
-          {items.map((item) => (
+          {safeItems.map((item) => (
             <Link
               key={item.applicant_id}
               href={`/applicants/${item.applicant_id}`}
