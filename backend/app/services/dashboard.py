@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.models import Applicant
 from app.schemas.applicant import ApplicantListItem
-from app.schemas.dashboard import DashboardOverview, MetricCard, SeriesPoint
+from app.schemas.dashboard import DashboardOverview, LossExposureItem, MetricCard, SeriesPoint
 
 
 def _month_label(value: date) -> str:
@@ -93,6 +93,30 @@ def fetch_dashboard_overview(session: Session, mode: str, owner_user_id: str) ->
         cohort_month = summary.created_at.date().replace(day=1)
         score_trend[cohort_month].append(summary.latest_score)
 
+    loss_watchlist: list[LossExposureItem] = []
+    for applicant in applicants:
+        summary = _serialize_applicant_summary(applicant, mode)
+        if summary is None:
+            continue
+        amount_lost = round(
+            sum(max(payment.amount_due - payment.amount_paid, 0.0) for payment in applicant.payment_history),
+            2,
+        )
+        if amount_lost <= 0:
+            continue
+        loss_watchlist.append(
+            LossExposureItem(
+                applicant_id=applicant.id,
+                full_name=summary.full_name,
+                region=summary.region,
+                employment_status=summary.employment_status,
+                amount_lost=amount_lost,
+                latest_band=summary.latest_band,
+                latest_score=summary.latest_score,
+            )
+        )
+    loss_watchlist.sort(key=lambda item: item.amount_lost, reverse=True)
+
     return DashboardOverview(
         is_empty=total == 0,
         summary_cards=[
@@ -137,4 +161,5 @@ def fetch_dashboard_overview(session: Session, mode: str, owner_user_id: str) ->
             for label, values in sorted(score_trend.items())[-6:]
         ],
         recent_applicants=summaries[:8],
+        loss_watchlist=loss_watchlist[:6],
     )

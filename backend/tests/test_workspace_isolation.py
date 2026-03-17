@@ -64,6 +64,7 @@ def test_dashboard_and_reports_only_include_current_users_applicants():
     assert owner_one_dashboard.is_empty is False
     assert owner_one_dashboard.summary_cards[0].value == "4"
     assert len(owner_one_dashboard.recent_applicants) == 4
+    assert all(item.amount_lost >= 0 for item in owner_one_dashboard.loss_watchlist)
     assert owner_two_report.total_applicants == 2
 
 

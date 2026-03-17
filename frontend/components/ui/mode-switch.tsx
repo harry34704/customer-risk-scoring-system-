@@ -26,14 +26,16 @@ export function ModeSwitch({
   }
 
   return (
-    <div className="inline-flex rounded-full border border-slate-200 bg-white/80 p-1 shadow-sm">
+    <div className="inline-flex rounded-full border border-[color:var(--line)] bg-[color:var(--card-strong)] p-1 shadow-[var(--surface-shadow-soft)]">
       {modes.map((item) => (
         <Link
           key={item}
           href={buildHref(item)}
           className={cn(
             "rounded-full px-4 py-2 text-sm font-semibold capitalize transition",
-            mode === item ? "bg-ink text-white" : "text-slate-500 hover:text-ink"
+            mode === item
+              ? "bg-[color:var(--signal-strong)] text-white"
+              : "text-[color:var(--muted)] hover:text-[color:var(--foreground)]"
           )}
         >
           {item}
@@ -42,4 +44,3 @@ export function ModeSwitch({
     </div>
   );
 }
-

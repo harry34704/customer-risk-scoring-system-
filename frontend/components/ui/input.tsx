@@ -7,7 +7,7 @@ export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttribute
     <input
       ref={ref}
       className={cn(
-        "w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-signal focus:ring-2 focus:ring-teal-100",
+        "field-shell w-full rounded-2xl px-4 py-3 text-sm shadow-sm outline-none transition focus:border-[color:var(--signal)] focus:ring-2 focus:ring-[color:var(--signal-soft)]",
         className
       )}
       {...props}
@@ -16,4 +16,3 @@ export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttribute
 );
 
 Input.displayName = "Input";
-

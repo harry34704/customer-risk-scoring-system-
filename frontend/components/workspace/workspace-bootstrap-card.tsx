@@ -45,42 +45,42 @@ export function WorkspaceBootstrapCard({
   }
 
   return (
-    <Card className={compact ? "" : "border-dashed border-slate-300 bg-white/85"}>
+    <Card className={compact ? "" : "border-dashed border-[color:var(--line-strong)] bg-[color:var(--card-strong)]"}>
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-2xl">
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[color:var(--success)] bg-[color:var(--success-soft)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--success)]">
             <DatabaseZap className="h-4 w-4" />
             Demo workspace
           </div>
-          <h3 className="text-xl font-semibold text-ink">{title}</h3>
-          <p className="mt-2 text-sm leading-6 text-slate-500">{description}</p>
+          <h3 className="text-xl font-semibold text-[color:var(--foreground)]">{title}</h3>
+          <p className="mt-2 text-sm leading-6 text-[color:var(--muted)]">{description}</p>
 
-          <div className="mt-4 grid gap-3 text-sm text-slate-600 md:grid-cols-3">
-            <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3">
-              <div className="flex items-center gap-2 font-semibold text-ink">
-                <BarChart3 className="h-4 w-4 text-signal" />
+          <div className="mt-4 grid gap-3 text-sm text-[color:var(--muted)] md:grid-cols-3">
+            <div className="surface-muted rounded-2xl px-4 py-3">
+              <div className="flex items-center gap-2 font-semibold text-[color:var(--foreground)]">
+                <BarChart3 className="h-4 w-4 text-[color:var(--signal-strong)]" />
                 500 applicants
               </div>
-              <div className="mt-1 text-slate-500">Seed realistic credit, income, payment, and cohort trend data.</div>
+              <div className="mt-1">Seed realistic credit, income, payment, and cohort trend data.</div>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3">
-              <div className="flex items-center gap-2 font-semibold text-ink">
-                <PenSquare className="h-4 w-4 text-signal" />
+            <div className="surface-muted rounded-2xl px-4 py-3">
+              <div className="flex items-center gap-2 font-semibold text-[color:var(--foreground)]">
+                <PenSquare className="h-4 w-4 text-[color:var(--signal-strong)]" />
                 Personal rules
               </div>
-              <div className="mt-1 text-slate-500">Your rule edits and rescoring stay isolated to this workspace.</div>
+              <div className="mt-1">Your rule edits and rescoring stay isolated to this workspace.</div>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3">
-              <div className="flex items-center gap-2 font-semibold text-ink">
-                <FileUp className="h-4 w-4 text-signal" />
+            <div className="surface-muted rounded-2xl px-4 py-3">
+              <div className="flex items-center gap-2 font-semibold text-[color:var(--foreground)]">
+                <FileUp className="h-4 w-4 text-[color:var(--signal-strong)]" />
                 CSV-ready
               </div>
-              <div className="mt-1 text-slate-500">Import your own applicants later without losing the empty-state setup path.</div>
+              <div className="mt-1">Import your own applicants later without losing the empty-state setup path.</div>
             </div>
           </div>
 
-          {message ? <p className="mt-4 text-sm font-medium text-emerald-700">{message}</p> : null}
-          {error ? <p className="mt-4 text-sm font-medium text-rose-700">{error}</p> : null}
+          {message ? <p className="mt-4 text-sm font-medium text-[color:var(--success)]">{message}</p> : null}
+          {error ? <p className="mt-4 text-sm font-medium text-[color:var(--danger)]">{error}</p> : null}
         </div>
 
         <div className="flex w-full flex-col gap-3 lg:w-auto">
@@ -89,13 +89,13 @@ export function WorkspaceBootstrapCard({
           </Button>
           <Link
             href="/imports"
-            className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-slate-50"
+            className="inline-flex items-center justify-center rounded-2xl border border-[color:var(--line)] bg-[color:var(--card-strong)] px-4 py-2 text-sm font-semibold text-[color:var(--foreground)] transition hover:bg-[color:var(--card)]"
           >
             Upload CSV instead
           </Link>
           <Link
             href="/applicants#manual-entry"
-            className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-slate-50"
+            className="inline-flex items-center justify-center rounded-2xl border border-[color:var(--line)] bg-[color:var(--card-strong)] px-4 py-2 text-sm font-semibold text-[color:var(--foreground)] transition hover:bg-[color:var(--card)]"
           >
             Create one manually
           </Link>

@@ -12,7 +12,7 @@ export function Card({
   return (
     <div
       className={cn(
-        "glass rounded-[28px] border border-white/70 p-6 shadow-soft",
+        "glass rounded-[28px] border border-[color:var(--line)] p-6 shadow-[var(--surface-shadow-soft)]",
         className
       )}
     >

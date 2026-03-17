@@ -133,6 +133,15 @@ export interface DashboardOverview {
   recovery_by_segment: { label: string; value: number }[];
   score_trend: { label: string; value: number }[];
   recent_applicants: ApplicantListItem[];
+  loss_watchlist: {
+    applicant_id: string;
+    full_name: string;
+    region: string;
+    employment_status: string;
+    amount_lost: number;
+    latest_band: RiskBand;
+    latest_score: number;
+  }[];
 }
 
 export interface ReportSummary {

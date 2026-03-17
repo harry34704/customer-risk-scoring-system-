@@ -2,17 +2,19 @@ import Link from "next/link";
 
 import { Card } from "@/components/ui/card";
 import { RiskBadge } from "@/components/ui/risk-badge";
+import { SectionHeading } from "@/components/ui/section-heading";
 import { type ApplicantListItem } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 
 export function RecentApplicants({ applicants }: { applicants: ApplicantListItem[] }) {
   return (
     <Card>
-      <div className="mb-5 flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-ink">Recent applicants</h3>
-          <p className="text-sm text-slate-500">Latest manually entered or seeded records in the scoring queue.</p>
-        </div>
+      <div className="mb-5 flex items-center justify-between gap-4">
+        <SectionHeading
+          title="Recent applicants"
+          description="Latest manually entered or seeded records in the scoring queue."
+          tooltip="Use this list to quickly open fresh applicants, validate current scoring behavior, and spot whether new names are arriving in higher or lower bands."
+        />
         <Link href="/applicants" className="text-sm font-semibold text-signal">
           View all
         </Link>
@@ -33,7 +35,7 @@ export function RecentApplicants({ applicants }: { applicants: ApplicantListItem
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-3">
-                <div className="text-sm text-slate-500">{formatCurrency(applicant.requested_amount)}</div>
+                <div className="text-sm text-slate-500">{formatCurrency(applicant.requested_amount, { region: applicant.region })}</div>
                 <div className="text-sm font-semibold text-ink">{applicant.latest_score.toFixed(1)}</div>
                 <RiskBadge band={applicant.latest_band} />
               </div>

@@ -3,6 +3,7 @@ import { ScoreBreakdown } from "@/components/applicants/score-breakdown";
 import { Topbar } from "@/components/layout/topbar";
 import { Card } from "@/components/ui/card";
 import { RiskBadge } from "@/components/ui/risk-badge";
+import { SectionHeading } from "@/components/ui/section-heading";
 import { fetchServerJson } from "@/lib/server-api";
 import { fetchUserProfile } from "@/lib/server-data";
 import { type ApplicantDetailResponse } from "@/lib/types";
@@ -18,6 +19,7 @@ export default async function ApplicantDetailPage({ params }: { params: { id: st
 
   const deterministic = detail.scores.find((score) => score.mode === "deterministic");
   const logistic = detail.scores.find((score) => score.mode === "logistic");
+  const region = detail.applicant.region;
 
   return (
     <section className="pb-10">
@@ -25,6 +27,7 @@ export default async function ApplicantDetailPage({ params }: { params: { id: st
         title={`${detail.applicant.first_name} ${detail.applicant.last_name}`}
         eyebrow="Applicant detail"
         userLabel={user.full_name}
+        description="Inspect the customer profile, compare deterministic and logistic scores, and follow the audit trail behind every scoring or update event."
       />
 
       <div className="mb-6 flex flex-wrap items-center gap-3">
@@ -34,20 +37,26 @@ export default async function ApplicantDetailPage({ params }: { params: { id: st
 
       <div className="mb-6 grid gap-4 xl:grid-cols-4">
         <Card>
-          <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Requested amount</div>
-          <div className="mt-4 text-3xl font-semibold text-ink">{formatCurrency(detail.applicant.financials.requested_amount)}</div>
+          <div className="text-xs uppercase tracking-[0.18em] text-[color:var(--muted)]">Requested amount</div>
+          <div className="mt-4 text-3xl font-semibold text-[color:var(--foreground)]">
+            {formatCurrency(detail.applicant.financials.requested_amount, { region })}
+          </div>
         </Card>
         <Card>
-          <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Annual income</div>
-          <div className="mt-4 text-3xl font-semibold text-ink">{formatCurrency(detail.applicant.financials.annual_income)}</div>
+          <div className="text-xs uppercase tracking-[0.18em] text-[color:var(--muted)]">Annual income</div>
+          <div className="mt-4 text-3xl font-semibold text-[color:var(--foreground)]">
+            {formatCurrency(detail.applicant.financials.annual_income, { region })}
+          </div>
         </Card>
         <Card>
-          <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Credit score</div>
-          <div className="mt-4 text-3xl font-semibold text-ink">{detail.applicant.financials.credit_score}</div>
+          <div className="text-xs uppercase tracking-[0.18em] text-[color:var(--muted)]">Credit score</div>
+          <div className="mt-4 text-3xl font-semibold text-[color:var(--foreground)]">{detail.applicant.financials.credit_score}</div>
         </Card>
         <Card>
-          <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Debt-to-income</div>
-          <div className="mt-4 text-3xl font-semibold text-ink">{formatPercent(detail.applicant.financials.debt_to_income_ratio)}</div>
+          <div className="text-xs uppercase tracking-[0.18em] text-[color:var(--muted)]">Debt-to-income</div>
+          <div className="mt-4 text-3xl font-semibold text-[color:var(--foreground)]">
+            {formatPercent(detail.applicant.financials.debt_to_income_ratio)}
+          </div>
         </Card>
       </div>
 
@@ -58,10 +67,14 @@ export default async function ApplicantDetailPage({ params }: { params: { id: st
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <Card>
-          <h3 className="text-lg font-semibold text-ink">Payment history</h3>
+          <SectionHeading
+            title="Payment history"
+            description="This timeline shows what was due, what was paid, and how late each repayment was."
+            tooltip="Payment history drives recovery ratio, default trends, and the loss watchlist. Partial or late payments are especially important for portfolio operations."
+          />
           <div className="mt-4 overflow-x-auto">
             <table className="min-w-full text-left text-sm">
-              <thead className="border-b border-slate-200 text-xs uppercase tracking-[0.18em] text-slate-400">
+              <thead className="border-b border-[color:var(--line)] text-xs uppercase tracking-[0.18em] text-[color:var(--muted)]">
                 <tr>
                   <th className="pb-3">Month</th>
                   <th className="pb-3">Due</th>
@@ -72,12 +85,12 @@ export default async function ApplicantDetailPage({ params }: { params: { id: st
               </thead>
               <tbody>
                 {detail.payment_history.map((row) => (
-                  <tr key={row.id} className="border-b border-slate-100 last:border-b-0">
-                    <td className="py-3 text-slate-600">{row.payment_month}</td>
-                    <td className="py-3 text-slate-600">{formatCurrency(row.amount_due)}</td>
-                    <td className="py-3 text-slate-600">{formatCurrency(row.amount_paid)}</td>
-                    <td className="py-3 text-slate-600">{row.days_late}</td>
-                    <td className="py-3 font-medium text-slate-700">{titleCase(row.status)}</td>
+                  <tr key={row.id} className="border-b border-[color:var(--line)]/70 last:border-b-0">
+                    <td className="py-3 text-[color:var(--muted)]">{row.payment_month}</td>
+                    <td className="py-3 text-[color:var(--muted)]">{formatCurrency(row.amount_due, { region })}</td>
+                    <td className="py-3 text-[color:var(--muted)]">{formatCurrency(row.amount_paid, { region })}</td>
+                    <td className="py-3 text-[color:var(--muted)]">{row.days_late}</td>
+                    <td className="py-3 font-medium text-[color:var(--foreground)]">{titleCase(row.status)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -86,15 +99,21 @@ export default async function ApplicantDetailPage({ params }: { params: { id: st
         </Card>
 
         <Card>
-          <h3 className="text-lg font-semibold text-ink">Audit trail</h3>
+          <SectionHeading
+            title="Audit trail"
+            description="Every create, rescore, import, or policy action is recorded so reviewers can trace the operational story."
+            tooltip="Audit events are especially useful in demos because they show that the app is not only scoring risk, but also preserving governance context."
+          />
           <div className="mt-4 space-y-3">
             {detail.audit_logs.map((log) => (
-              <div key={log.id} className="rounded-3xl border border-slate-200 bg-white/80 p-4">
+              <div key={log.id} className="rounded-[24px] border border-[color:var(--line)] bg-[color:var(--card)] p-4">
                 <div className="flex items-center justify-between gap-3">
-                  <div className="font-semibold text-ink">{log.action.replace(/_/g, " ")}</div>
-                  <div className="text-xs uppercase tracking-[0.18em] text-slate-400">{new Date(log.created_at).toLocaleString()}</div>
+                  <div className="font-semibold text-[color:var(--foreground)]">{log.action.replace(/_/g, " ")}</div>
+                  <div className="text-xs uppercase tracking-[0.18em] text-[color:var(--muted)]">
+                    {new Date(log.created_at).toLocaleString()}
+                  </div>
                 </div>
-                <div className="mt-2 text-sm text-slate-500">
+                <div className="mt-2 text-sm leading-6 text-[color:var(--muted)]">
                   {Object.keys(log.metadata_json).length > 0 ? JSON.stringify(log.metadata_json) : "No additional metadata"}
                 </div>
               </div>

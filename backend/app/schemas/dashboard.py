@@ -14,6 +14,16 @@ class SeriesPoint(BaseModel):
     value: float
 
 
+class LossExposureItem(BaseModel):
+    applicant_id: str
+    full_name: str
+    region: str
+    employment_status: str
+    amount_lost: float
+    latest_band: str
+    latest_score: float
+
+
 class DashboardOverview(BaseModel):
     is_empty: bool
     summary_cards: list[MetricCard]
@@ -22,3 +32,4 @@ class DashboardOverview(BaseModel):
     recovery_by_segment: list[SeriesPoint]
     score_trend: list[SeriesPoint]
     recent_applicants: list[ApplicantListItem]
+    loss_watchlist: list[LossExposureItem]
