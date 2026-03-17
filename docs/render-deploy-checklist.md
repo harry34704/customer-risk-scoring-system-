@@ -40,9 +40,9 @@ In the API service, confirm these values:
 - `DATABASE_URL`
   Source: `customer-risk-scoring-db` -> `connectionString`
 - `CORS_ORIGINS`
-  If you use the Blueprint, this is copied automatically from the web service `RENDER_EXTERNAL_URL`
+  Set this manually to your web service origin, for example `https://your-web-service.onrender.com`
 - `FRONTEND_URL`
-  If you use the Blueprint, this is copied automatically from the web service `RENDER_EXTERNAL_URL`
+  Set this manually to your web service origin, for example `https://your-web-service.onrender.com`
 - `AUTH_SECRET_KEY`
   Use the generated value from the Blueprint or replace it with your own long random secret.
 - `AUTH_TOKEN_TTL_MINUTES`
@@ -57,8 +57,7 @@ In the API service, confirm these values:
 In the web service, confirm:
 
 - `NEXT_PUBLIC_API_BASE_URL`
-  If you use the Blueprint, this is copied automatically from the API service `RENDER_EXTERNAL_URL`
-  Manual fallback: `https://your-api-service.onrender.com` or `https://your-api-service.onrender.com/api/v1`
+  Set this manually to `https://your-api-service.onrender.com` or `https://your-api-service.onrender.com/api/v1`
 
 ## 5. Deploy both services
 

@@ -211,7 +211,10 @@ Short version:
 2. Add the remote and push `main`.
 3. Create a new Render Blueprint from the repo.
 4. Let Render create the Postgres database, API service, and frontend service from `render.yaml`.
-5. Confirm the Blueprint has synced `NEXT_PUBLIC_API_BASE_URL`, `FRONTEND_URL`, and `CORS_ORIGINS` from the linked Render service URLs.
+5. Set these service environment variables manually in the Render Dashboard:
+   - API: `FRONTEND_URL=https://your-web-service.onrender.com`
+   - API: `CORS_ORIGINS=https://your-web-service.onrender.com`
+   - Web: `NEXT_PUBLIC_API_BASE_URL=https://your-api-service.onrender.com`
 6. Confirm `AUTH_SECRET_KEY` exists and `DATABASE_URL` is linked from Render Postgres.
 7. Deploy both services.
 8. Open a Render shell on the API service and run the seed command.
