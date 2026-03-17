@@ -1,13 +1,24 @@
+databases:
+  - name: customer-risk-scoring-db
+    databaseName: customer_risk_scoring
+    user: customer_risk_scoring
+    plan: free
+
 services:
   - type: web
     name: customer-risk-scoring-api
-    env: python
+    runtime: python
+    plan: free
     rootDir: backend
     buildCommand: python -m pip install -r requirements.txt
     startCommand: alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /healthz
     envVars:
       - key: DATABASE_URL
         sync: false
+        fromDatabase:
+          name: customer-risk-scoring-db
+          property: connectionString
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_ANON_KEY
@@ -18,4 +29,23 @@ services:
         sync: false
       - key: FRONTEND_URL
         sync: false
+      - key: LOGISTIC_MODEL_PATH
+        value: app/data/logistic_baseline.json
+      - key: SEED_DEMO_PASSWORD
+        value: Demo123!
 
+  - type: web
+    name: customer-risk-scoring-web
+    runtime: node
+    plan: free
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start -- --hostname 0.0.0.0 --port $PORT
+    healthCheckPath: /login
+    envVars:
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false
+      - key: NEXT_PUBLIC_API_BASE_URL
+        sync: false

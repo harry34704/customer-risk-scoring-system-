@@ -203,6 +203,17 @@ Headers:
 
 ## Deployment
 
+### Push to GitHub
+
+This repository is already initialized locally on branch `main`.
+
+Create an empty GitHub repository, then run:
+
+```bash
+git remote add origin https://github.com/<your-user>/<your-repo>.git
+git push -u origin main
+```
+
 ### Backend on Render
 
 Use the included [`render.yaml`](./render.yaml) or configure manually:
@@ -219,6 +230,36 @@ Required Render environment variables:
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `CORS_ORIGINS`
 - `FRONTEND_URL`
+
+### Render-only deployment
+
+If you want one hosting platform for the app instead of splitting frontend/backend across Vercel and Render, use the included [`render.yaml`](./render.yaml) as a monorepo blueprint.
+
+It defines:
+
+- `customer-risk-scoring-web` as a free Node web service for Next.js
+- `customer-risk-scoring-api` as a free Python web service for FastAPI
+- `customer-risk-scoring-db` as a free Render Postgres database
+
+For the frontend service on Render, set:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+NEXT_PUBLIC_API_BASE_URL=https://customer-risk-scoring-api.onrender.com/api/v1
+```
+
+For the backend service on Render, set:
+
+```env
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+CORS_ORIGINS=https://customer-risk-scoring-web.onrender.com
+FRONTEND_URL=https://customer-risk-scoring-web.onrender.com
+```
+
+The Render blueprint now provisions Postgres for the backend automatically. The remaining Supabase dependency is authentication.
 
 ### Frontend on Vercel
 
