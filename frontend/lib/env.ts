@@ -1,5 +1,8 @@
 export function readPublicEnv(name: "NEXT_PUBLIC_API_BASE_URL") {
-  const value = process.env[name];
+  const value =
+    name === "NEXT_PUBLIC_API_BASE_URL"
+      ? process.env.NEXT_PUBLIC_API_BASE_URL
+      : undefined;
   if (!value) {
     throw new Error(`Missing required environment variable: ${name}`);
   }
