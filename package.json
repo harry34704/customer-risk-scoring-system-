@@ -1,0 +1,15 @@
+{
+  "name": "customer-risk-scoring-system",
+  "private": true,
+  "workspaces": [
+    "frontend"
+  ],
+  "scripts": {
+    "dev:web": "npm --workspace frontend run dev",
+    "build:web": "npm --workspace frontend run build",
+    "lint:web": "npm --workspace frontend run lint",
+    "test:web": "npm --workspace frontend run test",
+    "tree": "find . -path './frontend/node_modules' -prune -o -path './frontend/.next' -prune -o -path './backend/.venv' -prune -o -path './backend/.pytest_cache' -prune -o -print"
+  }
+}
+

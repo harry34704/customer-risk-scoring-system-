@@ -1,0 +1,57 @@
+{
+  "version": "synthetic-v1",
+  "feature_order": [
+    "debt_to_income_ratio",
+    "credit_utilization",
+    "open_delinquencies",
+    "bankruptcies",
+    "late_payments_12m",
+    "on_time_payment_ratio",
+    "request_to_income_ratio",
+    "savings_buffer_months",
+    "credit_score",
+    "employment_tenure_years",
+    "monthly_income_surplus"
+  ],
+  "intercept": -0.6912,
+  "coefficients": {
+    "debt_to_income_ratio": 1.2184,
+    "credit_utilization": 1.0418,
+    "open_delinquencies": 0.6241,
+    "bankruptcies": 0.7126,
+    "late_payments_12m": 0.8579,
+    "on_time_payment_ratio": -0.9821,
+    "request_to_income_ratio": 0.6638,
+    "savings_buffer_months": -0.7764,
+    "credit_score": -1.3322,
+    "employment_tenure_years": -0.4417,
+    "monthly_income_surplus": -0.5925
+  },
+  "means": {
+    "debt_to_income_ratio": 0.4177,
+    "credit_utilization": 0.5344,
+    "open_delinquencies": 1.522,
+    "bankruptcies": 0.192,
+    "late_payments_12m": 2.381,
+    "on_time_payment_ratio": 0.801,
+    "request_to_income_ratio": 0.3278,
+    "savings_buffer_months": 4.123,
+    "credit_score": 655.17,
+    "employment_tenure_years": 4.231,
+    "monthly_income_surplus": 1215.46
+  },
+  "stds": {
+    "debt_to_income_ratio": 0.1672,
+    "credit_utilization": 0.2136,
+    "open_delinquencies": 1.298,
+    "bankruptcies": 0.512,
+    "late_payments_12m": 1.914,
+    "on_time_payment_ratio": 0.142,
+    "request_to_income_ratio": 0.152,
+    "savings_buffer_months": 2.881,
+    "credit_score": 93.81,
+    "employment_tenure_years": 3.107,
+    "monthly_income_surplus": 1398.44
+  }
+}
+
