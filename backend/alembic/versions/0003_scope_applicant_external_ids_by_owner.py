@@ -1,6 +1,6 @@
 """scope applicant external ids by owner
 
-Revision ID: 0003_scope_applicant_external_ids_by_owner
+Revision ID: 0003_scope_owner_ext_ids
 Revises: 0002_add_password_hash_to_users
 Create Date: 2026-03-17 18:40:00.000000
 """
@@ -8,7 +8,7 @@ Create Date: 2026-03-17 18:40:00.000000
 from alembic import op
 
 
-revision = "0003_scope_applicant_external_ids_by_owner"
+revision = "0003_scope_owner_ext_ids"
 down_revision = "0002_add_password_hash_to_users"
 branch_labels = None
 depends_on = None
