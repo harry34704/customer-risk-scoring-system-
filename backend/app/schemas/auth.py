@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 
 from app.schemas.common import UserProfileRead
 
 
 class LoginRequest(BaseModel):
-    email: EmailStr
+    email: str = Field(min_length=5, max_length=255)
     password: str = Field(min_length=8, max_length=128)
 
 

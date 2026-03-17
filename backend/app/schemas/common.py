@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict
 
 
 class ORMModel(BaseModel):
@@ -53,7 +53,7 @@ class AuditLogRead(ORMModel):
 
 class UserProfileRead(ORMModel):
     id: str
-    email: EmailStr
+    email: str
     full_name: str
     role: str
     is_demo: bool
