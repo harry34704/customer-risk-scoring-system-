@@ -3,10 +3,10 @@ from __future__ import annotations
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
-from app.api.deps import get_current_user, get_rules
+from app.api.deps import get_current_user
 from app.db.session import get_db
 from app.models import Applicant, ApplicantFinancials, User
 from app.schemas.applicant import (
@@ -18,7 +18,7 @@ from app.schemas.applicant import (
 )
 from app.schemas.common import AuditLogRead, PaymentHistoryRead, RiskScoreRead
 from app.services.audit import record_audit_log
-from app.services.scoring import build_score_records
+from app.services.scoring import build_score_records, get_rules_for_user
 
 router = APIRouter()
 
@@ -45,10 +45,10 @@ def _serialize_applicant_list_item(applicant: Applicant, mode: str) -> Optional[
     )
 
 
-def _get_applicant_or_404(session: Session, applicant_id: str) -> Applicant:
+def _get_applicant_or_404(session: Session, owner_user_id: str, applicant_id: str) -> Applicant:
     applicant = session.scalar(
         select(Applicant)
-        .where(Applicant.id == applicant_id)
+        .where(Applicant.id == applicant_id, Applicant.owner_user_id == owner_user_id)
         .options(
             selectinload(Applicant.financials),
             selectinload(Applicant.payment_history),
@@ -79,12 +79,14 @@ def list_applicants(
     search: str = Query(default=""),
     band: Optional[str] = Query(default=None),
     mode: str = Query(default="deterministic"),
-    _: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ) -> ApplicantListResponse:
     applicants = list(
         session.scalars(
-            select(Applicant).options(
+            select(Applicant)
+            .where(Applicant.owner_user_id == current_user.id)
+            .options(
                 selectinload(Applicant.financials),
                 selectinload(Applicant.risk_scores),
             )
@@ -92,6 +94,13 @@ def list_applicants(
     )
     items = []
     search_normalized = search.strip().lower()
+    workspace_total = len(
+        [
+            applicant
+            for applicant in applicants
+            if _serialize_applicant_list_item(applicant, mode) is not None
+        ]
+    )
     for applicant in applicants:
         serialized = _serialize_applicant_list_item(applicant, mode)
         if serialized is None:
@@ -110,7 +119,13 @@ def list_applicants(
     items.sort(key=lambda item: item.created_at, reverse=True)
     start = (page - 1) * page_size
     end = start + page_size
-    return ApplicantListResponse(items=items[start:end], total=len(items), page=page, page_size=page_size)
+    return ApplicantListResponse(
+        items=items[start:end],
+        total=len(items),
+        workspace_total=workspace_total,
+        page=page,
+        page_size=page_size,
+    )
 
 
 @router.post("", response_model=ApplicantDetailResponse, status_code=status.HTTP_201_CREATED)
@@ -119,9 +134,11 @@ def create_applicant(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ) -> ApplicantDetailResponse:
-    total_count = session.query(Applicant).count() + 1
+    total_count = session.scalar(
+        select(func.count()).select_from(Applicant).where(Applicant.owner_user_id == current_user.id)
+    ) or 0
     applicant = Applicant(
-        external_id=f"APP-{total_count:04d}",
+        external_id=f"APP-{total_count + 1:04d}",
         owner_user_id=current_user.id,
         first_name=payload.first_name,
         last_name=payload.last_name,
@@ -138,7 +155,7 @@ def create_applicant(
     applicant.financials = ApplicantFinancials(**payload.financials.model_dump())
     session.add(applicant)
     session.flush()
-    session.add_all(build_score_records(applicant, get_rules(session)))
+    session.add_all(build_score_records(applicant, get_rules_for_user(session, current_user.id, actor_user_id=current_user.id)))
     record_audit_log(
         session,
         actor_user_id=current_user.id,
@@ -149,7 +166,7 @@ def create_applicant(
     )
     session.commit()
     session.refresh(applicant)
-    applicant = _get_applicant_or_404(session, applicant.id)
+    applicant = _get_applicant_or_404(session, current_user.id, applicant.id)
     from app.models import AuditLog
 
     applicant.audit_log_rows = list(
@@ -163,10 +180,10 @@ def create_applicant(
 @router.get("/{applicant_id}", response_model=ApplicantDetailResponse)
 def read_applicant_detail(
     applicant_id: str,
-    _: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ) -> ApplicantDetailResponse:
-    applicant = _get_applicant_or_404(session, applicant_id)
+    applicant = _get_applicant_or_404(session, current_user.id, applicant_id)
     from app.models import AuditLog
 
     applicant.audit_log_rows = list(
@@ -183,8 +200,9 @@ def rescore_applicant(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ) -> ApplicantDetailResponse:
-    applicant = _get_applicant_or_404(session, applicant_id)
-    session.add_all(build_score_records(applicant, get_rules(session)))
+    applicant = _get_applicant_or_404(session, current_user.id, applicant_id)
+    rules = get_rules_for_user(session, current_user.id, actor_user_id=current_user.id)
+    session.add_all(build_score_records(applicant, rules))
     record_audit_log(
         session,
         actor_user_id=current_user.id,
@@ -194,7 +212,7 @@ def rescore_applicant(
         metadata={"modes": ["deterministic", "logistic"]},
     )
     session.commit()
-    refreshed = _get_applicant_or_404(session, applicant_id)
+    refreshed = _get_applicant_or_404(session, current_user.id, applicant_id)
     from app.models import AuditLog
 
     refreshed.audit_log_rows = list(

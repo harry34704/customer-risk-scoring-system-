@@ -12,6 +12,7 @@ from app.db.session import get_db
 from app.models import User
 from app.schemas.auth import AuthSessionRead, LoginRequest, RegisterRequest
 from app.schemas.common import UserProfileRead
+from app.services.scoring import ensure_default_rules
 
 router = APIRouter(prefix="/auth")
 
@@ -57,6 +58,7 @@ def register(payload: RegisterRequest, session: Session = Depends(get_db)) -> Au
         is_demo=False,
     )
     session.add(user)
+    ensure_default_rules(session, owner_user_id=user.id, actor_user_id=user.id)
     session.commit()
     session.refresh(user)
     return _build_session_response(user)

@@ -62,7 +62,7 @@ export function LoginPanel() {
       </div>
       <h2 className="text-3xl font-semibold text-ink">{title}</h2>
       <p className="mt-3 text-sm text-slate-500">
-        Use the seeded demo credentials or create a fresh analyst profile directly in this workspace.
+        Use the seeded demo credentials or create a fresh analyst profile. New accounts can load a demo portfolio after sign-in.
       </p>
 
       <div className="mt-6 inline-flex rounded-full border border-slate-200 bg-white/80 p-1">

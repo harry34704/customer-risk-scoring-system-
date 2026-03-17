@@ -13,8 +13,7 @@ router = APIRouter()
 @router.get("/overview", response_model=DashboardOverview)
 def read_dashboard_overview(
     mode: str = Query(default="deterministic"),
-    _: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ) -> DashboardOverview:
-    return fetch_dashboard_overview(session, mode)
-
+    return fetch_dashboard_overview(session, mode, current_user.id)

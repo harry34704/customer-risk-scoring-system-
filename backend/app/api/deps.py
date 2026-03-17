@@ -4,7 +4,6 @@ from typing import Optional
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.security import decode_access_token
@@ -32,11 +31,10 @@ async def get_current_user(
     return user
 
 
-def get_rules(session: Session):
-    from app.models import ScoringRule
-    from app.services.scoring import ensure_default_rules
+def get_rules(
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_db),
+):
+    from app.services.scoring import get_rules_for_user
 
-    rules = list(session.scalars(select(ScoringRule).order_by(ScoringRule.sort_order)))
-    if rules:
-        return rules
-    return ensure_default_rules(session)
+    return get_rules_for_user(session, owner_user_id=current_user.id, actor_user_id=current_user.id)

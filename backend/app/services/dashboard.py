@@ -43,10 +43,12 @@ def _serialize_applicant_summary(applicant: Applicant, mode: str) -> Optional[Ap
     )
 
 
-def fetch_dashboard_overview(session: Session, mode: str) -> DashboardOverview:
+def fetch_dashboard_overview(session: Session, mode: str, owner_user_id: str) -> DashboardOverview:
     applicants = list(
         session.scalars(
-            select(Applicant).options(
+            select(Applicant)
+            .where(Applicant.owner_user_id == owner_user_id)
+            .options(
                 selectinload(Applicant.financials),
                 selectinload(Applicant.payment_history),
                 selectinload(Applicant.risk_scores),
@@ -61,15 +63,14 @@ def fetch_dashboard_overview(session: Session, mode: str) -> DashboardOverview:
     ]
     summaries.sort(key=lambda item: item.created_at, reverse=True)
 
-    total = len(summaries) or 1
-    average_score = sum(item.latest_score for item in summaries) / total
+    total = len(summaries)
+    average_score = (sum(item.latest_score for item in summaries) / total) if total else 0.0
     high_risk_count = sum(1 for item in summaries if item.latest_band == "high")
     all_payments = [payment for applicant in applicants for payment in applicant.payment_history]
-    defaulted_payments = sum(1 for payment in all_payments if payment.status == "defaulted")
     recovery_ratio = (
         sum(payment.amount_paid for payment in all_payments) / sum(payment.amount_due for payment in all_payments)
         if all_payments and sum(payment.amount_due for payment in all_payments)
-        else 1.0
+        else 0.0
     )
 
     risk_distribution = defaultdict(float)
@@ -93,11 +94,28 @@ def fetch_dashboard_overview(session: Session, mode: str) -> DashboardOverview:
         score_trend[cohort_month].append(summary.latest_score)
 
     return DashboardOverview(
+        is_empty=total == 0,
         summary_cards=[
-            MetricCard(label="Applicants", value=str(len(summaries)), delta="+500 seeded"),
-            MetricCard(label="Average score", value=f"{average_score:.1f}", delta="Portfolio-wide"),
-            MetricCard(label="High risk share", value=f"{(high_risk_count / total) * 100:.1f}%", delta="Latest mode"),
-            MetricCard(label="Recovery ratio", value=f"{recovery_ratio * 100:.1f}%", delta="Collected vs due"),
+            MetricCard(
+                label="Applicants",
+                value=str(total),
+                delta="Load demo data or create records" if total == 0 else "Current workspace",
+            ),
+            MetricCard(
+                label="Average score",
+                value=f"{average_score:.1f}",
+                delta="Awaiting first scored applicant" if total == 0 else "Portfolio-wide",
+            ),
+            MetricCard(
+                label="High risk share",
+                value=f"{((high_risk_count / total) * 100) if total else 0:.1f}%",
+                delta="No scored portfolio yet" if total == 0 else "Latest mode",
+            ),
+            MetricCard(
+                label="Recovery ratio",
+                value=f"{recovery_ratio * 100:.1f}%",
+                delta="No payment history yet" if not all_payments else "Collected vs due",
+            ),
         ],
         risk_distribution=[
             SeriesPoint(label=label, value=value)
@@ -110,7 +128,7 @@ def fetch_dashboard_overview(session: Session, mode: str) -> DashboardOverview:
         recovery_by_segment=[
             SeriesPoint(
                 label=label,
-                value=round((values["paid"] / values["due"]) * 100, 2) if values["due"] else 100.0,
+                value=round((values["paid"] / values["due"]) * 100, 2) if values["due"] else 0.0,
             )
             for label, values in sorted(recovery_by_segment.items())
         ],

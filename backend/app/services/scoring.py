@@ -129,8 +129,20 @@ def band_from_score(score: float) -> str:
     return "high"
 
 
-def ensure_default_rules(session: Session, actor_user_id: Optional[str] = None) -> list[ScoringRule]:
-    existing_rules = list(session.scalars(select(ScoringRule).order_by(ScoringRule.sort_order)))
+def _rules_scope_filter(owner_user_id: Optional[str]):
+    if owner_user_id is None:
+        return ScoringRule.created_by_user_id.is_(None)
+    return ScoringRule.created_by_user_id == owner_user_id
+
+
+def ensure_default_rules(
+    session: Session,
+    owner_user_id: Optional[str],
+    actor_user_id: Optional[str] = None,
+) -> list[ScoringRule]:
+    existing_rules = list(
+        session.scalars(select(ScoringRule).where(_rules_scope_filter(owner_user_id)).order_by(ScoringRule.sort_order))
+    )
     if existing_rules:
         return existing_rules
 
@@ -140,13 +152,26 @@ def ensure_default_rules(session: Session, actor_user_id: Optional[str] = None) 
             ScoringRule(
                 **item,
                 enabled=True,
-                created_by_user_id=actor_user_id,
+                created_by_user_id=owner_user_id,
                 updated_by_user_id=actor_user_id,
             )
         )
     session.add_all(rules)
     session.flush()
     return rules
+
+
+def get_rules_for_user(
+    session: Session,
+    owner_user_id: Optional[str],
+    actor_user_id: Optional[str] = None,
+) -> list[ScoringRule]:
+    rules = list(
+        session.scalars(select(ScoringRule).where(_rules_scope_filter(owner_user_id)).order_by(ScoringRule.sort_order))
+    )
+    if rules:
+        return rules
+    return ensure_default_rules(session, owner_user_id=owner_user_id, actor_user_id=actor_user_id or owner_user_id)
 
 
 def _format_value(value: float) -> str:

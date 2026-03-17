@@ -22,10 +22,12 @@ def _latest_score(applicant: Applicant, mode: str):
     return None
 
 
-def _report_rows(session: Session, mode: str) -> list[dict]:
+def _report_rows(session: Session, mode: str, owner_user_id: str) -> list[dict]:
     applicants = list(
         session.scalars(
-            select(Applicant).options(
+            select(Applicant)
+            .where(Applicant.owner_user_id == owner_user_id)
+            .options(
                 selectinload(Applicant.financials),
                 selectinload(Applicant.payment_history),
                 selectinload(Applicant.risk_scores),
@@ -56,12 +58,12 @@ def _report_rows(session: Session, mode: str) -> list[dict]:
     return rows
 
 
-def build_report_summary(session: Session, mode: str) -> ReportSummary:
-    rows = _report_rows(session, mode)
-    total = len(rows) or 1
-    average_score = sum(row["score"] for row in rows) / total
-    average_probability_default = sum(row["probability_default"] for row in rows) / total
-    high_risk_share = sum(1 for row in rows if row["band"] == "high") / total
+def build_report_summary(session: Session, mode: str, owner_user_id: str) -> ReportSummary:
+    rows = _report_rows(session, mode, owner_user_id)
+    total = len(rows)
+    average_score = (sum(row["score"] for row in rows) / total) if total else 0.0
+    average_probability_default = (sum(row["probability_default"] for row in rows) / total) if total else 0.0
+    high_risk_share = (sum(1 for row in rows if row["band"] == "high") / total) if total else 0.0
 
     top_regions_map = defaultdict(lambda: {"count": 0, "score_total": 0.0})
     cohort_trend_map = defaultdict(list)
@@ -94,8 +96,8 @@ def build_report_summary(session: Session, mode: str) -> ReportSummary:
     )
 
 
-def build_csv_export(session: Session, mode: str) -> str:
-    rows = _report_rows(session, mode)
+def build_csv_export(session: Session, mode: str, owner_user_id: str) -> str:
+    rows = _report_rows(session, mode, owner_user_id)
     buffer = StringIO()
     writer = csv.DictWriter(
         buffer,
@@ -118,8 +120,8 @@ def build_csv_export(session: Session, mode: str) -> str:
     return buffer.getvalue()
 
 
-def build_pdf_export(session: Session, mode: str) -> bytes:
-    report = build_report_summary(session, mode)
+def build_pdf_export(session: Session, mode: str, owner_user_id: str) -> bytes:
+    report = build_report_summary(session, mode, owner_user_id)
     buffer = BytesIO()
     document = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=36, rightMargin=36, topMargin=36, bottomMargin=36)
     styles = getSampleStyleSheet()
@@ -158,4 +160,3 @@ def build_pdf_export(session: Session, mode: str) -> bytes:
     )
     document.build(story)
     return buffer.getvalue()
-

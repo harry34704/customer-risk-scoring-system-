@@ -77,6 +77,7 @@ class ApplicantListItem(BaseModel):
 class ApplicantListResponse(BaseModel):
     items: list[ApplicantListItem]
     total: int
+    workspace_total: int
     page: int
     page_size: int
 

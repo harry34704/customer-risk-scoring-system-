@@ -5,6 +5,7 @@ import { Topbar } from "@/components/layout/topbar";
 import { Card } from "@/components/ui/card";
 import { ModeSwitch } from "@/components/ui/mode-switch";
 import { RiskBadge } from "@/components/ui/risk-badge";
+import { WorkspaceBootstrapCard } from "@/components/workspace/workspace-bootstrap-card";
 import { fetchServerJson } from "@/lib/server-api";
 import { fetchUserProfile } from "@/lib/server-data";
 import { type ApplicantListResponse, type RiskMode } from "@/lib/types";
@@ -69,44 +70,62 @@ export default async function ApplicantsPage({
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead className="border-b border-slate-200 text-xs uppercase tracking-[0.18em] text-slate-400">
-                <tr>
-                  <th className="pb-3">Applicant</th>
-                  <th className="pb-3">Region</th>
-                  <th className="pb-3">Income</th>
-                  <th className="pb-3">Request</th>
-                  <th className="pb-3">PD</th>
-                  <th className="pb-3">Score</th>
-                  <th className="pb-3">Band</th>
-                </tr>
-              </thead>
-              <tbody>
-                {applicants.items.map((applicant) => (
-                  <tr key={applicant.id} className="border-b border-slate-100 last:border-b-0">
-                    <td className="py-4">
-                      <Link href={`/applicants/${applicant.id}`} className="font-semibold text-ink hover:text-signal">
-                        {applicant.full_name}
-                      </Link>
-                      <div className="mt-1 text-slate-500">{applicant.email}</div>
-                    </td>
-                    <td className="py-4 text-slate-600">{applicant.region}</td>
-                    <td className="py-4 text-slate-600">{formatCurrency(applicant.annual_income)}</td>
-                    <td className="py-4 text-slate-600">{formatCurrency(applicant.requested_amount)}</td>
-                    <td className="py-4 font-medium text-slate-700">{formatPercent(applicant.latest_probability_default)}</td>
-                    <td className="py-4 font-semibold text-ink">{applicant.latest_score.toFixed(1)}</td>
-                    <td className="py-4">
-                      <RiskBadge band={applicant.latest_band} />
-                    </td>
+          {applicants.total ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-left text-sm">
+                <thead className="border-b border-slate-200 text-xs uppercase tracking-[0.18em] text-slate-400">
+                  <tr>
+                    <th className="pb-3">Applicant</th>
+                    <th className="pb-3">Region</th>
+                    <th className="pb-3">Income</th>
+                    <th className="pb-3">Request</th>
+                    <th className="pb-3">PD</th>
+                    <th className="pb-3">Score</th>
+                    <th className="pb-3">Band</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {applicants.items.map((applicant) => (
+                    <tr key={applicant.id} className="border-b border-slate-100 last:border-b-0">
+                      <td className="py-4">
+                        <Link href={`/applicants/${applicant.id}`} className="font-semibold text-ink hover:text-signal">
+                          {applicant.full_name}
+                        </Link>
+                        <div className="mt-1 text-slate-500">{applicant.email}</div>
+                      </td>
+                      <td className="py-4 text-slate-600">{applicant.region}</td>
+                      <td className="py-4 text-slate-600">{formatCurrency(applicant.annual_income)}</td>
+                      <td className="py-4 text-slate-600">{formatCurrency(applicant.requested_amount)}</td>
+                      <td className="py-4 font-medium text-slate-700">{formatPercent(applicant.latest_probability_default)}</td>
+                      <td className="py-4 font-semibold text-ink">{applicant.latest_score.toFixed(1)}</td>
+                      <td className="py-4">
+                        <RiskBadge band={applicant.latest_band} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <>
+              {applicants.workspace_total === 0 ? (
+                <WorkspaceBootstrapCard
+                  compact
+                  title="No applicants are in this workspace yet."
+                  description="Load the demo portfolio to populate the review queue instantly, or use the manual form alongside this panel to create your first scored applicant."
+                />
+              ) : (
+                <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50/80 px-5 py-8 text-center text-sm text-slate-500">
+                  No applicants match the current filters. Adjust the search term or score band to widen the view.
+                </div>
+              )}
+            </>
+          )}
         </Card>
 
-        <ManualEntryForm />
+        <div id="manual-entry">
+          <ManualEntryForm />
+        </div>
       </div>
     </section>
   );

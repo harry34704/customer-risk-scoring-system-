@@ -26,8 +26,13 @@ def main() -> None:
             reset_seed_data(session)
 
         demo_users = seed_demo_users(session, password=settings.seed_demo_password)
-        actor_user_id = next((user.id for user in demo_users if user.role == "admin"), None)
-        seed_demo_dataset(session, applicant_count=args.applicants, actor_user_id=actor_user_id)
+        for demo_user in demo_users:
+            seed_demo_dataset(
+                session,
+                applicant_count=args.applicants,
+                owner_user_id=demo_user.id,
+                actor_user_id=demo_user.id,
+            )
         session.commit()
 
 

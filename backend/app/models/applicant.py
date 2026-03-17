@@ -11,9 +11,10 @@ from app.models.base import Base, TimestampMixin
 
 class Applicant(TimestampMixin, Base):
     __tablename__ = "applicants"
+    __table_args__ = (UniqueConstraint("owner_user_id", "external_id", name="uq_applicants_owner_external_id"),)
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    external_id: Mapped[str] = mapped_column(String(40), unique=True, nullable=False, index=True)
+    external_id: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
     owner_user_id: Mapped[Optional[str]] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
     first_name: Mapped[str] = mapped_column(String(120), nullable=False)
     last_name: Mapped[str] = mapped_column(String(120), nullable=False)

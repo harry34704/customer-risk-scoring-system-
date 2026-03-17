@@ -79,6 +79,7 @@ export interface ApplicantListItem {
 export interface ApplicantListResponse {
   items: ApplicantListItem[];
   total: number;
+  workspace_total: number;
   page: number;
   page_size: number;
 }
@@ -121,6 +122,7 @@ export interface ScoringRule {
 }
 
 export interface DashboardOverview {
+  is_empty: boolean;
   summary_cards: {
     label: string;
     value: string;
@@ -157,6 +159,20 @@ export interface ImportResult {
   errors: string[];
 }
 
+export interface WorkspaceSummary {
+  applicant_count: number;
+  rule_count: number;
+  payment_count: number;
+  is_empty: boolean;
+  can_bootstrap_demo: boolean;
+}
+
+export interface WorkspaceBootstrapResponse {
+  bootstrapped: boolean;
+  workspace_summary: WorkspaceSummary;
+  message: string;
+}
+
 export interface SettingsResponse {
   app_name: string;
   frontend_url: string;
@@ -165,6 +181,7 @@ export interface SettingsResponse {
     password: string;
     role: string;
   }[];
+  workspace_summary: WorkspaceSummary;
   expected_applicant_csv_headers: string[];
   expected_payment_csv_headers: string[];
   scoring_modes: {
@@ -181,4 +198,3 @@ export interface UserProfile {
   role: string;
   is_demo: boolean;
 }
-

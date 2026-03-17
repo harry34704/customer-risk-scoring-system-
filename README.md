@@ -95,6 +95,8 @@ source .venv/bin/activate
 python -m app.seed --reset --applicants 500 --refresh-model
 ```
 
+This seeds both demo accounts so either login sees a populated portfolio.
+
 ### 7. Start the backend
 
 ```bash
@@ -120,6 +122,8 @@ npm run dev
 ```
 
 Frontend login page: `http://localhost:3000/login`
+
+If you sign up with a brand-new account instead of using a seeded demo account, the dashboard now shows a `Load demo workspace` action that seeds a private 500-applicant portfolio for that user.
 
 ## Demo credentials
 
@@ -198,8 +202,8 @@ Payment history CSV headers:
 ### Frontend service
 
 - `NEXT_PUBLIC_API_BASE_URL`
-  If you use the included Blueprint, Render now fills this automatically from the API service's `RENDER_EXTERNAL_URL`.
-  Manual example: `https://your-api-service.onrender.com` or `https://your-api-service.onrender.com/api/v1`
+  Set this manually in Render.
+  Example: `https://your-api-service.onrender.com` or `https://your-api-service.onrender.com/api/v1`
 
 ## GitHub-ready deployment checklist
 
@@ -217,8 +221,8 @@ Short version:
    - Web: `NEXT_PUBLIC_API_BASE_URL=https://your-api-service.onrender.com`
 6. Confirm `AUTH_SECRET_KEY` exists and `DATABASE_URL` is linked from Render Postgres.
 7. Deploy both services.
-8. Open a Render shell on the API service and run the seed command.
-9. Log in with the seeded demo credentials and verify `/dashboard`, `/imports`, and `/reports`.
+8. Seed the database either from a Render API shell or from your local machine using the Render Postgres external URL.
+9. Log in with the seeded demo credentials, or sign up and use `Load demo workspace`, then verify `/dashboard`, `/imports`, and `/reports`.
 
 ## Render deployment
 
@@ -238,4 +242,13 @@ After the first deploy, seed the database from the Render API shell:
 
 ```bash
 python -m app.seed --reset --applicants 500 --refresh-model
+```
+
+If your Render plan does not include shell access, run the same commands locally against the Render Postgres external URL:
+
+```bash
+cd backend
+source .venv/bin/activate
+DATABASE_URL='postgresql://...' alembic upgrade head
+DATABASE_URL='postgresql://...' SEED_DEMO_PASSWORD='Demo123!' PYTHONPATH=. python -m app.seed --reset --applicants 500 --refresh-model
 ```

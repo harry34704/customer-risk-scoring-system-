@@ -5,7 +5,7 @@ from datetime import date, datetime, timedelta, timezone
 from typing import Optional
 from uuid import uuid4
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.core.security import hash_password
@@ -126,9 +126,20 @@ def seed_demo_users(session: Session, password: str = "Demo123!") -> list[User]:
     return users
 
 
-def seed_demo_dataset(session: Session, applicant_count: int = 500, actor_user_id: Optional[str] = None) -> None:
+def seed_demo_dataset(
+    session: Session,
+    applicant_count: int = 500,
+    owner_user_id: Optional[str] = None,
+    actor_user_id: Optional[str] = None,
+) -> None:
+    existing_count = session.scalar(
+        select(func.count()).select_from(Applicant).where(Applicant.owner_user_id == owner_user_id)
+    ) or 0
+    if existing_count:
+        return
+
     rng = random.Random(42)
-    rules = ensure_default_rules(session, actor_user_id)
+    rules = ensure_default_rules(session, owner_user_id=owner_user_id, actor_user_id=actor_user_id)
     now = datetime.now(timezone.utc)
 
     for index in range(applicant_count):
@@ -146,7 +157,7 @@ def seed_demo_dataset(session: Session, applicant_count: int = 500, actor_user_i
         applicant = Applicant(
             id=str(uuid4()),
             external_id=f"APP-{index + 1:04d}",
-            owner_user_id=actor_user_id,
+            owner_user_id=owner_user_id,
             first_name=rng.choice(FIRST_NAMES),
             last_name=rng.choice(LAST_NAMES),
             email=f"applicant{index + 1:04d}@example.com",

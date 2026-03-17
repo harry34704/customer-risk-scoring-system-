@@ -18,28 +18,33 @@ export function RecentApplicants({ applicants }: { applicants: ApplicantListItem
         </Link>
       </div>
 
-      <div className="space-y-4">
-        {applicants.map((applicant) => (
-          <Link
-            key={applicant.id}
-            href={`/applicants/${applicant.id}`}
-            className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white/80 p-4 transition hover:-translate-y-0.5 hover:shadow-md lg:flex-row lg:items-center lg:justify-between"
-          >
-            <div>
-              <div className="text-sm font-semibold text-ink">{applicant.full_name}</div>
-              <div className="mt-1 text-sm text-slate-500">
-                {applicant.region} · {applicant.employment_status}
+      {applicants.length ? (
+        <div className="space-y-4">
+          {applicants.map((applicant) => (
+            <Link
+              key={applicant.id}
+              href={`/applicants/${applicant.id}`}
+              className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white/80 p-4 transition hover:-translate-y-0.5 hover:shadow-md lg:flex-row lg:items-center lg:justify-between"
+            >
+              <div>
+                <div className="text-sm font-semibold text-ink">{applicant.full_name}</div>
+                <div className="mt-1 text-sm text-slate-500">
+                  {applicant.region} · {applicant.employment_status}
+                </div>
               </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="text-sm text-slate-500">{formatCurrency(applicant.requested_amount)}</div>
-              <div className="text-sm font-semibold text-ink">{applicant.latest_score.toFixed(1)}</div>
-              <RiskBadge band={applicant.latest_band} />
-            </div>
-          </Link>
-        ))}
-      </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="text-sm text-slate-500">{formatCurrency(applicant.requested_amount)}</div>
+                <div className="text-sm font-semibold text-ink">{applicant.latest_score.toFixed(1)}</div>
+                <RiskBadge band={applicant.latest_band} />
+              </div>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50/80 px-5 py-8 text-center text-sm text-slate-500">
+          No applicants in this workspace yet. Load the demo portfolio, import a CSV, or create your first manual record.
+        </div>
+      )}
     </Card>
   );
 }
-

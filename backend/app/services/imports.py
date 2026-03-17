@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.models import Applicant, ApplicantFinancials, PaymentHistory, ScoringRule
 from app.schemas.reports import ImportResult
 from app.services.audit import record_audit_log
-from app.services.scoring import build_score_records, ensure_default_rules
+from app.services.scoring import build_score_records, get_rules_for_user
 
 
 def _parse_date(raw_value: Optional[str]) -> Optional[date]:
@@ -33,14 +33,13 @@ def _parse_int(raw_value: Optional[str], default: int = 0) -> int:
     return int(float(raw_value))
 
 
-def _load_rules(session: Session) -> list[ScoringRule]:
-    rules = list(session.scalars(select(ScoringRule).order_by(ScoringRule.sort_order)))
-    return rules or ensure_default_rules(session)
+def _load_rules(session: Session, owner_user_id: Optional[str]) -> list[ScoringRule]:
+    return get_rules_for_user(session, owner_user_id=owner_user_id, actor_user_id=owner_user_id)
 
 
 def import_applicants_csv(session: Session, actor_user_id: Optional[str], content: bytes) -> ImportResult:
     reader = csv.DictReader(StringIO(content.decode("utf-8")))
-    rules = _load_rules(session)
+    rules = _load_rules(session, actor_user_id)
     imported = 0
     updated = 0
     skipped = 0
@@ -51,6 +50,7 @@ def import_applicants_csv(session: Session, actor_user_id: Optional[str], conten
             external_id = row.get("external_id") or f"APP-{uuid4().hex[:8].upper()}"
             applicant = session.scalar(
                 select(Applicant)
+                .where(Applicant.owner_user_id == actor_user_id)
                 .where(Applicant.external_id == external_id)
                 .options(
                     selectinload(Applicant.financials),
@@ -148,7 +148,7 @@ def import_applicants_csv(session: Session, actor_user_id: Optional[str], conten
 
 def import_payment_histories_csv(session: Session, actor_user_id: Optional[str], content: bytes) -> ImportResult:
     reader = csv.DictReader(StringIO(content.decode("utf-8")))
-    rules = _load_rules(session)
+    rules = _load_rules(session, actor_user_id)
     imported = 0
     updated = 0
     skipped = 0
@@ -162,6 +162,7 @@ def import_payment_histories_csv(session: Session, actor_user_id: Optional[str],
             if external_id:
                 applicant = session.scalar(
                     select(Applicant)
+                    .where(Applicant.owner_user_id == actor_user_id)
                     .where(Applicant.external_id == external_id)
                     .options(
                         selectinload(Applicant.financials),
@@ -172,6 +173,7 @@ def import_payment_histories_csv(session: Session, actor_user_id: Optional[str],
             if applicant is None and applicant_email:
                 applicant = session.scalar(
                     select(Applicant)
+                    .where(Applicant.owner_user_id == actor_user_id)
                     .where(Applicant.email == applicant_email)
                     .options(
                         selectinload(Applicant.financials),

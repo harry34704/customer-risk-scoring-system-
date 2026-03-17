@@ -68,14 +68,28 @@ In the web service, confirm:
 
 ## 6. Run the seed job
 
-Open a shell for the API service and run:
+Preferred option if your Render plan includes shell access:
 
 ```bash
 cd /opt/render/project/src/backend
 python -m app.seed --reset --applicants 500 --refresh-model
 ```
 
-This creates the demo users, 500 applicants, scoring rules, score records, and the logistic baseline artifact.
+Free-plan alternative if shell access is unavailable:
+
+1. Open `customer-risk-scoring-db` in Render.
+2. Click `Connect`.
+3. Copy the `External Database URL`.
+4. From your local machine, run:
+
+```bash
+cd backend
+source .venv/bin/activate
+DATABASE_URL='postgresql://...' alembic upgrade head
+DATABASE_URL='postgresql://...' SEED_DEMO_PASSWORD='Demo123!' PYTHONPATH=. python -m app.seed --reset --applicants 500 --refresh-model
+```
+
+This creates the demo users, a private 500-applicant workspace for each demo login, scoring rules, score records, and the logistic baseline artifact.
 
 ## 7. Verify the deployment
 
@@ -83,6 +97,7 @@ This creates the demo users, 500 applicants, scoring rules, score records, and t
 2. Sign in with:
    - `demo@riskscore.local` / `Demo123!`
    - `analyst@riskscore.local` / `Demo123!`
+   - or create your own account and click `Load demo workspace`
 3. Verify these routes:
    - `/dashboard`
    - `/applicants`
