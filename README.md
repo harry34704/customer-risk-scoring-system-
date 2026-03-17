@@ -198,7 +198,8 @@ Payment history CSV headers:
 ### Frontend service
 
 - `NEXT_PUBLIC_API_BASE_URL`
-  Example: `https://your-api-service.onrender.com/api/v1`
+  If you use the included Blueprint, Render now fills this automatically from the API service's `RENDER_EXTERNAL_URL`.
+  Manual example: `https://your-api-service.onrender.com` or `https://your-api-service.onrender.com/api/v1`
 
 ## GitHub-ready deployment checklist
 
@@ -210,7 +211,7 @@ Short version:
 2. Add the remote and push `main`.
 3. Create a new Render Blueprint from the repo.
 4. Let Render create the Postgres database, API service, and frontend service from `render.yaml`.
-5. Set the API and web URLs in `NEXT_PUBLIC_API_BASE_URL`, `FRONTEND_URL`, and `CORS_ORIGINS`.
+5. Confirm the Blueprint has synced `NEXT_PUBLIC_API_BASE_URL`, `FRONTEND_URL`, and `CORS_ORIGINS` from the linked Render service URLs.
 6. Confirm `AUTH_SECRET_KEY` exists and `DATABASE_URL` is linked from Render Postgres.
 7. Deploy both services.
 8. Open a Render shell on the API service and run the seed command.

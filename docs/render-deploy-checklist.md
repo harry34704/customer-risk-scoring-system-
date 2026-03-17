@@ -40,9 +40,9 @@ In the API service, confirm these values:
 - `DATABASE_URL`
   Source: `customer-risk-scoring-db` -> `connectionString`
 - `CORS_ORIGINS`
-  Example: `https://your-web-service.onrender.com,http://localhost:3000`
+  If you use the Blueprint, this is copied automatically from the web service `RENDER_EXTERNAL_URL`
 - `FRONTEND_URL`
-  Example: `https://your-web-service.onrender.com`
+  If you use the Blueprint, this is copied automatically from the web service `RENDER_EXTERNAL_URL`
 - `AUTH_SECRET_KEY`
   Use the generated value from the Blueprint or replace it with your own long random secret.
 - `AUTH_TOKEN_TTL_MINUTES`
@@ -54,16 +54,18 @@ In the API service, confirm these values:
 
 ## 4. Set the frontend environment variable
 
-In the web service, set:
+In the web service, confirm:
 
 - `NEXT_PUBLIC_API_BASE_URL`
-  Example: `https://your-api-service.onrender.com/api/v1`
+  If you use the Blueprint, this is copied automatically from the API service `RENDER_EXTERNAL_URL`
+  Manual fallback: `https://your-api-service.onrender.com` or `https://your-api-service.onrender.com/api/v1`
 
 ## 5. Deploy both services
 
 1. Trigger a deploy from the Blueprint or from each service dashboard.
 2. Wait for the API health check at `/healthz` to pass.
 3. Wait for the frontend `/login` page to load.
+4. If the frontend still shows `Missing required environment variable: NEXT_PUBLIC_API_BASE_URL`, open the web service in Render, confirm the env var exists, then trigger a manual redeploy.
 
 ## 6. Run the seed job
 

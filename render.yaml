@@ -19,9 +19,15 @@ services:
           name: customer-risk-scoring-db
           property: connectionString
       - key: CORS_ORIGINS
-        sync: false
+        fromService:
+          type: web
+          name: customer-risk-scoring-web
+          envVarKey: RENDER_EXTERNAL_URL
       - key: FRONTEND_URL
-        sync: false
+        fromService:
+          type: web
+          name: customer-risk-scoring-web
+          envVarKey: RENDER_EXTERNAL_URL
       - key: AUTH_SECRET_KEY
         generateValue: true
       - key: AUTH_TOKEN_TTL_MINUTES
@@ -41,4 +47,7 @@ services:
     healthCheckPath: /login
     envVars:
       - key: NEXT_PUBLIC_API_BASE_URL
-        sync: false
+        fromService:
+          type: web
+          name: customer-risk-scoring-api
+          envVarKey: RENDER_EXTERNAL_URL

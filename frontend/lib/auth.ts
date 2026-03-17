@@ -1,4 +1,4 @@
-import { readPublicEnv } from "@/lib/env";
+import { readPublicApiBaseUrl } from "@/lib/env";
 import { type UserProfile } from "@/lib/types";
 
 export const AUTH_COOKIE_NAME = "crs_session";
@@ -11,7 +11,7 @@ interface AuthPayload {
 }
 
 function buildAuthUrl(path: string) {
-  return `${readPublicEnv("NEXT_PUBLIC_API_BASE_URL")}${path}`;
+  return `${readPublicApiBaseUrl()}${path}`;
 }
 
 async function readErrorMessage(response: Response) {

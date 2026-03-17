@@ -1,7 +1,7 @@
-import { readPublicEnv } from "@/lib/env";
+import { readPublicApiBaseUrl } from "@/lib/env";
 import { clearStoredAccessToken, getClientAccessToken } from "@/lib/auth";
 
-const apiBaseUrl = () => readPublicEnv("NEXT_PUBLIC_API_BASE_URL");
+const apiBaseUrl = () => readPublicApiBaseUrl();
 
 export class BackendError extends Error {
   status: number;
