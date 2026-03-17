@@ -1,0 +1,106 @@
+# Render Deployment Checklist
+
+This checklist assumes you are deploying the current Render-only version of the app:
+
+- Next.js frontend on Render
+- FastAPI backend on Render
+- Render Postgres
+- in-app email/password auth
+
+## 1. Push the repository to GitHub
+
+1. Create an empty GitHub repository.
+2. Add the remote:
+
+```bash
+git remote add origin https://github.com/<your-user>/<your-repo>.git
+```
+
+3. Push the code:
+
+```bash
+git push -u origin main
+```
+
+## 2. Create the Render Blueprint
+
+1. In Render, choose `New +`.
+2. Choose `Blueprint`.
+3. Connect the GitHub repository.
+4. Select the repo root that contains `render.yaml`.
+5. Confirm the Blueprint creates:
+   - `customer-risk-scoring-db`
+   - `customer-risk-scoring-api`
+   - `customer-risk-scoring-web`
+
+## 3. Set the backend environment variables
+
+In the API service, confirm these values:
+
+- `DATABASE_URL`
+  Source: `customer-risk-scoring-db` -> `connectionString`
+- `CORS_ORIGINS`
+  Example: `https://your-web-service.onrender.com,http://localhost:3000`
+- `FRONTEND_URL`
+  Example: `https://your-web-service.onrender.com`
+- `AUTH_SECRET_KEY`
+  Use the generated value from the Blueprint or replace it with your own long random secret.
+- `AUTH_TOKEN_TTL_MINUTES`
+  Set to `10080`
+- `LOGISTIC_MODEL_PATH`
+  Set to `app/data/logistic_baseline.json`
+- `SEED_DEMO_PASSWORD`
+  Set to `Demo123!` or your preferred demo password
+
+## 4. Set the frontend environment variable
+
+In the web service, set:
+
+- `NEXT_PUBLIC_API_BASE_URL`
+  Example: `https://your-api-service.onrender.com/api/v1`
+
+## 5. Deploy both services
+
+1. Trigger a deploy from the Blueprint or from each service dashboard.
+2. Wait for the API health check at `/healthz` to pass.
+3. Wait for the frontend `/login` page to load.
+
+## 6. Run the seed job
+
+Open a shell for the API service and run:
+
+```bash
+cd /opt/render/project/src/backend
+python -m app.seed --reset --applicants 500 --refresh-model
+```
+
+This creates the demo users, 500 applicants, scoring rules, score records, and the logistic baseline artifact.
+
+## 7. Verify the deployment
+
+1. Open the frontend `/login` page.
+2. Sign in with:
+   - `demo@riskscore.local` / `Demo123!`
+   - `analyst@riskscore.local` / `Demo123!`
+3. Verify these routes:
+   - `/dashboard`
+   - `/applicants`
+   - `/imports`
+   - `/reports`
+   - `/settings`
+
+## 8. If you deployed from an older local database snapshot
+
+If your database was created from the earlier Supabase-auth version of the app:
+
+1. Run:
+
+```bash
+alembic upgrade head
+```
+
+2. Rerun the seed job so demo users receive local password hashes:
+
+```bash
+python -m app.seed --reset --applicants 500 --refresh-model
+```

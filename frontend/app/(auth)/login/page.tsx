@@ -1,16 +1,12 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { Activity, ShieldAlert, Sparkles } from "lucide-react";
 
 import { LoginPanel } from "@/components/auth/login-panel";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { AUTH_COOKIE_NAME } from "@/lib/auth";
 
 export default async function LoginPage() {
-  const supabase = createSupabaseServerClient();
-  const {
-    data: { session }
-  } = await supabase.auth.getSession();
-
-  if (session) {
+  if (cookies().get(AUTH_COOKIE_NAME)?.value) {
     redirect("/dashboard");
   }
 
@@ -63,4 +59,3 @@ export default async function LoginPage() {
     </main>
   );
 }
-

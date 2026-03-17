@@ -1,41 +1,30 @@
 # Customer Risk Scoring System
 
-Portfolio-grade full-stack underwriting workspace built with Next.js 14, TypeScript, Tailwind CSS, FastAPI, SQLAlchemy/Alembic, and Supabase Postgres/Auth. The application scores applicants with both configurable deterministic rules and a synthetic logistic regression baseline, exposes explainable top-factor breakdowns, supports bulk CSV ingestion, and ships with seeded demo data for 500 applicants.
+Portfolio-grade full-stack underwriting workspace built with Next.js 14, TypeScript, Tailwind CSS, FastAPI, SQLAlchemy/Alembic, and Postgres. The app scores applicants with configurable deterministic rules plus a logistic regression baseline, shows explainable top-factor breakdowns, supports CSV imports and exports, and ships with seeded demo data for 500 applicants.
 
 Full repo structure is captured in [docs/folder-tree.txt](./docs/folder-tree.txt).
 
+## Stack
+
+- Frontend: Next.js 14 App Router, TypeScript, Tailwind CSS, Recharts
+- Backend: FastAPI, SQLAlchemy 2.0, Alembic, ReportLab
+- Database: Postgres
+- Auth: simple in-app email/password auth with PBKDF2 password hashes and signed bearer tokens
+- Deployment: Render Blueprint for web, API, and Postgres
+
 ## Feature set
 
-- Supabase email/password authentication
+- In-app email/password auth
 - Dashboard with risk distribution, defaults by month, recovery by segment, and score trend charts
-- Applicant list with filter/search and manual-entry form
-- Applicant detail pages with dual-mode scores, top-factor explanation cards, payment history, and audit trail
-- Configurable scoring rules editor with portfolio rescoring
+- Applicants list with search, filters, and manual entry
+- Applicant detail pages with dual-mode scores, explanation cards, payment history, and audit trail
+- Scoring rules editor with portfolio rescoring
 - CSV uploads for applicants and payment histories
-- Report summary page with CSV export and PDF export
-- Seed workflow for 500 realistic demo applicants and demo credentials
-- Backend scoring tests and frontend critical-flow tests
+- CSV export and printable PDF export
+- Seed workflow for 500 realistic demo applicants
+- Backend scoring/auth tests and frontend critical-flow tests
 
-## Architecture
-
-### Frontend
-
-- `frontend/`
-- Next.js 14 App Router
-- TypeScript + Tailwind CSS
-- Supabase SSR/browser clients for auth
-- Recharts for dashboard visualizations
-
-### Backend
-
-- `backend/`
-- FastAPI + SQLAlchemy 2.0
-- Alembic migrations
-- Supabase Postgres via `DATABASE_URL`
-- Supabase Auth validation via `/auth/v1/user`
-- Seed CLI with demo data + optional Supabase Auth user provisioning
-
-### Core domain tables
+## Core tables
 
 - `users`
 - `applicants`
@@ -47,49 +36,39 @@ Full repo structure is captured in [docs/folder-tree.txt](./docs/folder-tree.txt
 
 ## Local setup
 
-### 1. Create a Supabase project
-
-1. Create a new Supabase project.
-2. Enable Email authentication under `Authentication > Providers`.
-3. For easiest local demo seeding, disable email confirmation or use the Auth admin seed path with `SUPABASE_SERVICE_ROLE_KEY`.
-4. Copy:
-   - Project URL
-   - Anon key
-   - Service role key
-   - Postgres connection string
-
-### 2. Configure environment variables
-
-Copy the example files:
+### 1. Copy environment files
 
 ```bash
 cp .env.example .env
-cp frontend/.env.local.example frontend/.env.local
 cp backend/.env.example backend/.env
+cp frontend/.env.local.example frontend/.env.local
 ```
 
-Set the frontend variables:
+### 2. Set local environment variables
+
+Frontend:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000/api/v1
 ```
 
-Set the backend variables:
+Backend:
 
 ```env
-DATABASE_URL=postgresql+psycopg://postgres:password@db.your-project.supabase.co:5432/postgres
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your-supabase-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/customer_risk_scoring
 CORS_ORIGINS=http://localhost:3000
 FRONTEND_URL=http://localhost:3000
+AUTH_SECRET_KEY=change-this-local-secret
+AUTH_TOKEN_TTL_MINUTES=10080
 LOGISTIC_MODEL_PATH=app/data/logistic_baseline.json
 SEED_DEMO_PASSWORD=Demo123!
 ```
 
-### 3. Install backend dependencies
+### 3. Start Postgres
+
+Run any local Postgres instance and create a database named `customer_risk_scoring`, or update `DATABASE_URL` to match your local database.
+
+### 4. Install backend dependencies
 
 ```bash
 cd backend
@@ -98,7 +77,7 @@ source .venv/bin/activate
 python -m pip install -r requirements-dev.txt
 ```
 
-### 4. Run database migrations
+### 5. Run migrations
 
 ```bash
 cd backend
@@ -106,9 +85,9 @@ source .venv/bin/activate
 alembic upgrade head
 ```
 
-This applies the application schema into your Supabase Postgres `public` schema.
+If you previously ran the older Supabase-auth version, this applies `0002_add_password_hash_to_users`. Rerun the seed command after migrating so demo users receive valid local passwords.
 
-### 5. Seed model artifact, demo users, and 500 applicants
+### 6. Seed demo data
 
 ```bash
 cd backend
@@ -116,12 +95,7 @@ source .venv/bin/activate
 python -m app.seed --reset --applicants 500 --refresh-model
 ```
 
-Notes:
-
-- If `SUPABASE_SERVICE_ROLE_KEY` is set, the seed command will attempt to create the demo auth users directly in Supabase Auth.
-- If you omit the service role key, the seed still creates the application-side user profiles and applicant/demo records. You can then sign up the demo accounts manually through the UI with the same credentials.
-
-### 6. Start the backend
+### 7. Start the backend
 
 ```bash
 cd backend
@@ -129,34 +103,34 @@ source .venv/bin/activate
 uvicorn app.main:app --reload
 ```
 
-The API will be available at `http://127.0.0.1:8000`, with app routes under `http://127.0.0.1:8000/api/v1`.
+Backend health check: `http://127.0.0.1:8000/healthz`
 
-### 7. Install frontend dependencies
+### 8. Install frontend dependencies
 
 ```bash
 cd frontend
 npm install
 ```
 
-### 8. Start the frontend
+### 9. Start the frontend
 
 ```bash
 cd frontend
 npm run dev
 ```
 
-The frontend runs at `http://localhost:3000`.
+Frontend login page: `http://localhost:3000/login`
 
 ## Demo credentials
-
-Use either seeded demo account:
 
 - `demo@riskscore.local` / `Demo123!`
 - `analyst@riskscore.local` / `Demo123!`
 
+If you change `SEED_DEMO_PASSWORD`, rerun the seed command and use the updated password shown on the Settings page.
+
 ## Testing
 
-### Backend
+Backend:
 
 ```bash
 cd backend
@@ -164,16 +138,21 @@ source .venv/bin/activate
 pytest
 ```
 
-### Frontend
+Frontend:
 
 ```bash
 cd frontend
 npm run test
 ```
 
-## Seed and screenshot workflow
+Production frontend build:
 
-For a clean screenshot/demo cycle:
+```bash
+cd frontend
+npm run build
+```
+
+## Seed and screenshot workflow
 
 ```bash
 cd backend
@@ -181,7 +160,7 @@ source .venv/bin/activate
 python -m app.seed --reset --applicants 500 --refresh-model
 ```
 
-Then start the backend and frontend and open:
+Then sign in and capture:
 
 - `/dashboard`
 - `/applicants`
@@ -189,115 +168,70 @@ Then start the backend and frontend and open:
 
 ## CSV expectations
 
-### Applicants CSV
-
-Headers:
+Applicants CSV headers:
 
 `external_id,first_name,last_name,email,phone,date_of_birth,employment_status,company_name,years_employed,residential_status,region,status,annual_income,monthly_expenses,debt_to_income_ratio,savings_balance,existing_credit_lines,credit_utilization,bankruptcies,open_delinquencies,credit_score,requested_amount,loan_purpose`
 
-### Payment histories CSV
-
-Headers:
+Payment history CSV headers:
 
 `applicant_external_id,applicant_email,payment_month,amount_due,amount_paid,days_late,status`
 
-## Deployment
+## Exact Render environment variables
 
-### Push to GitHub
-
-This repository is already initialized locally on branch `main`.
-
-Create an empty GitHub repository, then run:
-
-```bash
-git remote add origin https://github.com/<your-user>/<your-repo>.git
-git push -u origin main
-```
-
-### Backend on Render
-
-Use the included [`render.yaml`](./render.yaml) or configure manually:
-
-- Root directory: `backend`
-- Build command: `python -m pip install -r requirements.txt`
-- Start command: `alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-
-Required Render environment variables:
+### Backend service
 
 - `DATABASE_URL`
-- `SUPABASE_URL`
-- `SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
+  Use Render Postgres `connectionString` from `customer-risk-scoring-db`.
 - `CORS_ORIGINS`
+  Example: `https://your-web-service.onrender.com,http://localhost:3000`
 - `FRONTEND_URL`
+  Example: `https://your-web-service.onrender.com`
+- `AUTH_SECRET_KEY`
+  Use a long random secret. The Blueprint can generate this automatically.
+- `AUTH_TOKEN_TTL_MINUTES`
+  Recommended: `10080`
+- `LOGISTIC_MODEL_PATH`
+  Set to `app/data/logistic_baseline.json`
+- `SEED_DEMO_PASSWORD`
+  Recommended demo seed password: `Demo123!`
 
-### Render-only deployment
+### Frontend service
 
-If you want one hosting platform for the app instead of splitting frontend/backend across Vercel and Render, use the included [`render.yaml`](./render.yaml) as a monorepo blueprint.
-
-It defines:
-
-- `customer-risk-scoring-web` as a free Node web service for Next.js
-- `customer-risk-scoring-api` as a free Python web service for FastAPI
-- `customer-risk-scoring-db` as a free Render Postgres database
-
-For the frontend service on Render, set:
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-NEXT_PUBLIC_API_BASE_URL=https://customer-risk-scoring-api.onrender.com/api/v1
-```
-
-For the backend service on Render, set:
-
-```env
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-CORS_ORIGINS=https://customer-risk-scoring-web.onrender.com
-FRONTEND_URL=https://customer-risk-scoring-web.onrender.com
-```
-
-The Render blueprint now provisions Postgres for the backend automatically. The remaining Supabase dependency is authentication.
-
-### Frontend on Vercel
-
-Configure the Vercel project with:
-
-- Root directory: `frontend`
-- Framework preset: `Next.js`
-
-Required Vercel environment variables:
-
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `NEXT_PUBLIC_API_BASE_URL`
+  Example: `https://your-api-service.onrender.com/api/v1`
 
-Set `NEXT_PUBLIC_API_BASE_URL` to your Render backend, for example:
+## GitHub-ready deployment checklist
 
-```env
-NEXT_PUBLIC_API_BASE_URL=https://customer-risk-scoring-api.onrender.com/api/v1
-```
+See [docs/render-deploy-checklist.md](./docs/render-deploy-checklist.md) for the full step-by-step flow.
 
-### Supabase production notes
+Short version:
 
-- Add your Vercel URL and localhost URLs to the Supabase Auth redirect/site URL allowlist.
-- Use the Supabase pooled Postgres connection string for `DATABASE_URL`.
-- Keep the service role key only on the backend/Render side.
+1. Create an empty GitHub repo.
+2. Add the remote and push `main`.
+3. Create a new Render Blueprint from the repo.
+4. Let Render create the Postgres database, API service, and frontend service from `render.yaml`.
+5. Set the API and web URLs in `NEXT_PUBLIC_API_BASE_URL`, `FRONTEND_URL`, and `CORS_ORIGINS`.
+6. Confirm `AUTH_SECRET_KEY` exists and `DATABASE_URL` is linked from Render Postgres.
+7. Deploy both services.
+8. Open a Render shell on the API service and run the seed command.
+9. Log in with the seeded demo credentials and verify `/dashboard`, `/imports`, and `/reports`.
 
-## Useful commands
+## Render deployment
 
-Generate the folder tree artifact again:
+The repository includes [render.yaml](./render.yaml) for a single-platform deployment on Render:
+
+- `customer-risk-scoring-db` for Postgres
+- `customer-risk-scoring-api` for FastAPI
+- `customer-risk-scoring-web` for Next.js
+
+The API start command runs migrations automatically:
 
 ```bash
-npm run tree > docs/folder-tree.txt
+alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
 ```
 
-Refresh the synthetic logistic artifact only:
+After the first deploy, seed the database from the Render API shell:
 
 ```bash
-cd backend
-source .venv/bin/activate
-python -m app.seed --refresh-model
+python -m app.seed --reset --applicants 500 --refresh-model
 ```

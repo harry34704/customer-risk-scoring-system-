@@ -6,7 +6,7 @@ import { AlertCircle, ArrowRight, ShieldCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { loginUser, registerUser, storeAccessToken } from "@/lib/auth";
 
 type Mode = "signin" | "signup";
 
@@ -21,7 +21,6 @@ export function LoginPanel() {
   const [fullName, setFullName] = useState("Portfolio Analyst");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
 
   const title = useMemo(
     () => (mode === "signin" ? "Sign in to continue" : "Create a demo-capable workspace"),
@@ -32,43 +31,22 @@ export function LoginPanel() {
     event.preventDefault();
     setLoading(true);
     setError(null);
-    setMessage(null);
-    const supabase = createSupabaseBrowserClient();
 
     try {
-      if (mode === "signin") {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password
-        });
-        if (signInError) {
-          throw signInError;
-        }
-        router.push(nextPath);
-        router.refresh();
-        return;
-      }
-
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName
-          }
-        }
-      });
-      if (signUpError) {
-        throw signUpError;
-      }
-
-      if (data.session) {
-        router.push(nextPath);
-        router.refresh();
-      } else {
-        setMessage("Account created. If email confirmations are enabled, approve the verification email before signing in.");
-        setMode("signin");
-      }
+      const session =
+        mode === "signin"
+          ? await loginUser({
+              email,
+              password
+            })
+          : await registerUser({
+              full_name: fullName,
+              email,
+              password
+            });
+      storeAccessToken(session.access_token, session.expires_at);
+      router.push(nextPath);
+      router.refresh();
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Authentication failed");
     } finally {
@@ -80,11 +58,11 @@ export function LoginPanel() {
     <div className="glass w-full max-w-xl rounded-[36px] border border-white/80 p-8 shadow-soft">
       <div className="mb-8 flex items-center gap-3 text-sm font-semibold uppercase tracking-[0.2em] text-signal">
         <ShieldCheck className="h-4 w-4" />
-        Supabase Auth
+        In-app auth
       </div>
       <h2 className="text-3xl font-semibold text-ink">{title}</h2>
       <p className="mt-3 text-sm text-slate-500">
-        Use the seeded demo credentials or create a fresh analyst profile against your Supabase project.
+        Use the seeded demo credentials or create a fresh analyst profile directly in this workspace.
       </p>
 
       <div className="mt-6 inline-flex rounded-full border border-slate-200 bg-white/80 p-1">
@@ -105,17 +83,29 @@ export function LoginPanel() {
       <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
         {mode === "signup" ? (
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-600">Full name</label>
-            <Input value={fullName} onChange={(event) => setFullName(event.target.value)} required />
+            <label htmlFor="full-name" className="mb-2 block text-sm font-medium text-slate-600">
+              Full name
+            </label>
+            <Input id="full-name" value={fullName} onChange={(event) => setFullName(event.target.value)} required />
           </div>
         ) : null}
         <div>
-          <label className="mb-2 block text-sm font-medium text-slate-600">Email</label>
-          <Input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+          <label htmlFor="email" className="mb-2 block text-sm font-medium text-slate-600">
+            Email
+          </label>
+          <Input id="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
         </div>
         <div>
-          <label className="mb-2 block text-sm font-medium text-slate-600">Password</label>
-          <Input type="password" value={password} onChange={(event) => setPassword(event.target.value)} required />
+          <label htmlFor="password" className="mb-2 block text-sm font-medium text-slate-600">
+            Password
+          </label>
+          <Input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            required
+          />
         </div>
 
         {error ? (
@@ -124,12 +114,6 @@ export function LoginPanel() {
               <AlertCircle className="mt-0.5 h-4 w-4" />
               <span>{error}</span>
             </div>
-          </div>
-        ) : null}
-
-        {message ? (
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            {message}
           </div>
         ) : null}
 

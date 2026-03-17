@@ -4,35 +4,13 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { readPublicEnv } from "@/lib/env";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { fetchClientFormData } from "@/lib/api";
 import { type ImportResult } from "@/lib/types";
 
 async function uploadCsv(path: string, file: File) {
-  const supabase = createSupabaseBrowserClient();
-  const {
-    data: { session }
-  } = await supabase.auth.getSession();
-
-  if (!session?.access_token) {
-    throw new Error("You are not signed in.");
-  }
-
   const formData = new FormData();
   formData.append("file", file);
-  const response = await fetch(`${readPublicEnv("NEXT_PUBLIC_API_BASE_URL")}${path}`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${session.access_token}`
-    },
-    body: formData
-  });
-
-  if (!response.ok) {
-    throw new Error(await response.text());
-  }
-
-  return (await response.json()) as ImportResult;
+  return fetchClientFormData<ImportResult>(path, formData);
 }
 
 export function ImportPanel() {

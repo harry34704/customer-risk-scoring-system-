@@ -8,6 +8,7 @@ from uuid import uuid4
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
+from app.core.security import hash_password
 from app.models import Applicant, ApplicantFinancials, AuditLog, PaymentHistory, RiskScore, ScoringRule, User
 from app.services.audit import record_audit_log
 from app.services.features import build_feature_map
@@ -63,10 +64,10 @@ LOAN_PURPOSES = ["Working capital", "Vehicle", "Home improvement", "Education", 
 COMPANIES = ["Northstar Foods", "Atlas Commerce", "Blue Peak Energy", "Harbor Labs", "Crestline Health"]
 
 
-def demo_credentials() -> list[dict]:
+def demo_credentials(password: str = "Demo123!") -> list[dict]:
     return [
-        {"email": "demo@riskscore.local", "password": "Demo123!", "role": "admin"},
-        {"email": "analyst@riskscore.local", "password": "Demo123!", "role": "analyst"},
+        {"email": "demo@riskscore.local", "password": password, "role": "admin"},
+        {"email": "analyst@riskscore.local", "password": password, "role": "analyst"},
     ]
 
 
@@ -101,19 +102,25 @@ def _subtract_months(anchor: date, months: int) -> date:
     return date(year, month, 1)
 
 
-def seed_demo_users(session: Session) -> list[User]:
+def seed_demo_users(session: Session, password: str = "Demo123!") -> list[User]:
     users: list[User] = []
-    for credential in demo_credentials():
+    for credential in demo_credentials(password):
         existing = session.scalar(select(User).where(User.email == credential["email"]))
         if existing is None:
             existing = User(
                 id=str(uuid4()),
                 email=credential["email"],
+                password_hash=hash_password(credential["password"]),
                 full_name="Demo Admin" if credential["role"] == "admin" else "Risk Analyst",
                 role=credential["role"],
                 is_demo=True,
             )
             session.add(existing)
+        else:
+            existing.full_name = "Demo Admin" if credential["role"] == "admin" else "Risk Analyst"
+            existing.role = credential["role"]
+            existing.is_demo = True
+            existing.password_hash = hash_password(credential["password"])
         users.append(existing)
     session.flush()
     return users

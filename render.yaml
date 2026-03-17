@@ -15,20 +15,17 @@ services:
     healthCheckPath: /healthz
     envVars:
       - key: DATABASE_URL
-        sync: false
         fromDatabase:
           name: customer-risk-scoring-db
           property: connectionString
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_ANON_KEY
-        sync: false
-      - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false
       - key: CORS_ORIGINS
         sync: false
       - key: FRONTEND_URL
         sync: false
+      - key: AUTH_SECRET_KEY
+        generateValue: true
+      - key: AUTH_TOKEN_TTL_MINUTES
+        value: "10080"
       - key: LOGISTIC_MODEL_PATH
         value: app/data/logistic_baseline.json
       - key: SEED_DEMO_PASSWORD
@@ -43,9 +40,5 @@ services:
     startCommand: npm run start -- --hostname 0.0.0.0 --port $PORT
     healthCheckPath: /login
     envVars:
-      - key: NEXT_PUBLIC_SUPABASE_URL
-        sync: false
-      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
-        sync: false
       - key: NEXT_PUBLIC_API_BASE_URL
         sync: false

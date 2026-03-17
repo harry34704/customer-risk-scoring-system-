@@ -15,7 +15,7 @@ def read_settings(_: User = Depends(get_current_user)) -> SettingsRead:
     return SettingsRead(
         app_name=settings.app_name,
         frontend_url=settings.frontend_url,
-        demo_credentials=demo_credentials(),
+        demo_credentials=demo_credentials(settings.seed_demo_password),
         expected_applicant_csv_headers=APPLICANT_IMPORT_HEADERS,
         expected_payment_csv_headers=PAYMENT_IMPORT_HEADERS,
         scoring_modes=[
@@ -23,4 +23,3 @@ def read_settings(_: User = Depends(get_current_user)) -> SettingsRead:
             {"id": "logistic", "label": "Logistic baseline", "description": "Synthetic baseline default model."},
         ],
     )
-

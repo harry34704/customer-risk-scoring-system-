@@ -21,14 +21,13 @@ class Settings(BaseSettings):
         default="postgresql+psycopg://postgres:postgres@localhost:5432/postgres",
         alias="DATABASE_URL",
     )
-    supabase_url: str = Field(default="", alias="SUPABASE_URL")
-    supabase_anon_key: str = Field(default="", alias="SUPABASE_ANON_KEY")
-    supabase_service_role_key: str = Field(default="", alias="SUPABASE_SERVICE_ROLE_KEY")
     cors_origins: Annotated[list[str], NoDecode] = Field(
         default_factory=lambda: ["http://localhost:3000"],
         alias="CORS_ORIGINS",
     )
     frontend_url: str = Field(default="http://localhost:3000", alias="FRONTEND_URL")
+    auth_secret_key: str = Field(default="local-dev-change-me", alias="AUTH_SECRET_KEY")
+    auth_token_ttl_minutes: int = Field(default=10080, alias="AUTH_TOKEN_TTL_MINUTES")
     logistic_model_path: str = Field(
         default=str(Path(__file__).resolve().parents[1] / "data" / "logistic_baseline.json"),
         alias="LOGISTIC_MODEL_PATH",
