@@ -4,7 +4,9 @@ import { CsvTemplateCard } from "@/components/imports/csv-template-card";
 import { ImportPanel } from "@/components/imports/import-panel";
 import { Topbar } from "@/components/layout/topbar";
 import { Card } from "@/components/ui/card";
+import { ServerErrorState } from "@/components/ui/server-error-state";
 import { SectionHeading } from "@/components/ui/section-heading";
+import { rethrowIfNavigationError } from "@/lib/next-navigation-error";
 import { fetchServerJson } from "@/lib/server-api";
 import { fetchUserProfile } from "@/lib/server-data";
 import { type SettingsResponse } from "@/lib/types";
@@ -48,17 +50,43 @@ const paymentTemplateRow = {
 };
 
 export default async function ImportsPage() {
-  const [user, settings] = await Promise.all([
-    fetchUserProfile(),
-    fetchServerJson<SettingsResponse>("/settings")
-  ]);
+  let userLabel = "Workspace assistance";
+  let settings: SettingsResponse | null = null;
+
+  try {
+    const user = await fetchUserProfile();
+    userLabel = user.full_name;
+    settings = await fetchServerJson<SettingsResponse>("/settings");
+  } catch (error) {
+    rethrowIfNavigationError(error);
+  }
+
+  if (!settings) {
+    return (
+      <section className="pb-10">
+        <Topbar
+          title="Imports"
+          eyebrow="Bulk ingestion"
+          userLabel={userLabel}
+          description="The import workspace is available, but the live schema and template settings are reconnecting."
+        />
+        <ServerErrorState
+          title="Import templates could not be loaded right now."
+          description="CSV headers, download cards, and upload guidance are temporarily unavailable. The page is still stable, and the templates will reappear as soon as the backend settings payload returns."
+          retryHref="/imports"
+          secondaryHref="/applicants#manual-entry"
+          secondaryLabel="Open manual entry"
+        />
+      </section>
+    );
+  }
 
   return (
     <section className="pb-10">
       <Topbar
         title="Imports"
         eyebrow="Bulk ingestion"
-        userLabel={user.full_name}
+        userLabel={userLabel}
         description="Start with the downloadable CSV examples, match the required headers exactly, and then ingest applicants or payment histories into the current workspace."
       />
 

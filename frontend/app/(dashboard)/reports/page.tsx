@@ -4,7 +4,9 @@ import { ReportActions } from "@/components/reports/report-actions";
 import { Card } from "@/components/ui/card";
 import { ModeSwitch } from "@/components/ui/mode-switch";
 import { SectionHeading } from "@/components/ui/section-heading";
+import { ServerErrorState } from "@/components/ui/server-error-state";
 import { WorkspaceBootstrapCard } from "@/components/workspace/workspace-bootstrap-card";
+import { rethrowIfNavigationError } from "@/lib/next-navigation-error";
 import { fetchServerJson } from "@/lib/server-api";
 import { fetchUserProfile } from "@/lib/server-data";
 import { type ReportSummary, type RiskMode } from "@/lib/types";
@@ -20,17 +22,43 @@ export default async function ReportsPage({
   const mode = ((Array.isArray(searchParams?.mode) ? searchParams?.mode[0] : searchParams?.mode) ??
     "deterministic") as RiskMode;
 
-  const [user, report] = await Promise.all([
-    fetchUserProfile(),
-    fetchServerJson<ReportSummary>(`/reports/summary?mode=${mode}`)
-  ]);
+  let userLabel = "Workspace assistance";
+  let report: ReportSummary | null = null;
+
+  try {
+    const user = await fetchUserProfile();
+    userLabel = user.full_name;
+    report = await fetchServerJson<ReportSummary>(`/reports/summary?mode=${mode}`);
+  } catch (error) {
+    rethrowIfNavigationError(error);
+  }
+
+  if (!report) {
+    return (
+      <section className="pb-10">
+        <Topbar
+          title="Reports"
+          eyebrow="Portfolio exports"
+          userLabel={userLabel}
+          description="The reporting workspace is still available, but the live summary feed is reconnecting."
+        />
+        <ServerErrorState
+          title="Report data could not be loaded right now."
+          description="Export summaries, top regions, and cohort trends are temporarily unavailable. Once the backend finishes responding, this page will resume normally."
+          retryHref={`/reports?mode=${mode}`}
+          secondaryHref="/dashboard"
+          secondaryLabel="Back to dashboard"
+        />
+      </section>
+    );
+  }
 
   return (
     <section className="pb-10">
       <Topbar
         title="Reports"
         eyebrow="Portfolio exports"
-        userLabel={user.full_name}
+        userLabel={userLabel}
         description="Summarize the portfolio for a stakeholder, explain what the statistics mean, and export the evidence as CSV or printable PDF."
       />
 

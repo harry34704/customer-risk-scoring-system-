@@ -6,8 +6,10 @@ import { MetricCard as DashboardMetricCard } from "@/components/dashboard/metric
 import { RecentApplicants } from "@/components/dashboard/recent-applicants";
 import { Topbar } from "@/components/layout/topbar";
 import { WorkspaceBootstrapCard } from "@/components/workspace/workspace-bootstrap-card";
+import { ServerErrorState } from "@/components/ui/server-error-state";
 import { fetchServerJson } from "@/lib/server-api";
 import { fetchUserProfile } from "@/lib/server-data";
+import { rethrowIfNavigationError } from "@/lib/next-navigation-error";
 import { type DashboardOverview, type RiskMode } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -20,27 +22,54 @@ export default async function DashboardPage({
   const mode = ((Array.isArray(searchParams?.mode) ? searchParams?.mode[0] : searchParams?.mode) ??
     "deterministic") as RiskMode;
 
-  const [user, overview] = await Promise.all([
-    fetchUserProfile(),
-    fetchServerJson<DashboardOverview>(`/dashboard/overview?mode=${mode}`)
-  ]);
-  const normalizedOverview: DashboardOverview = {
-    is_empty: overview?.is_empty ?? true,
-    summary_cards: overview?.summary_cards ?? [],
-    risk_distribution: overview?.risk_distribution ?? [],
-    defaults_by_month: overview?.defaults_by_month ?? [],
-    recovery_by_segment: overview?.recovery_by_segment ?? [],
-    score_trend: overview?.score_trend ?? [],
-    recent_applicants: overview?.recent_applicants ?? [],
-    loss_watchlist: overview?.loss_watchlist ?? []
-  };
+  let userLabel = "Workspace assistance";
+  let normalizedOverview: DashboardOverview | null = null;
+
+  try {
+    const user = await fetchUserProfile();
+    userLabel = user.full_name;
+
+    const overview = await fetchServerJson<DashboardOverview>(`/dashboard/overview?mode=${mode}`);
+    normalizedOverview = {
+      is_empty: overview?.is_empty ?? true,
+      summary_cards: overview?.summary_cards ?? [],
+      risk_distribution: overview?.risk_distribution ?? [],
+      defaults_by_month: overview?.defaults_by_month ?? [],
+      recovery_by_segment: overview?.recovery_by_segment ?? [],
+      score_trend: overview?.score_trend ?? [],
+      recent_applicants: overview?.recent_applicants ?? [],
+      loss_watchlist: overview?.loss_watchlist ?? []
+    };
+  } catch (error) {
+    rethrowIfNavigationError(error);
+  }
+
+  if (!normalizedOverview) {
+    return (
+      <section className="pb-10">
+        <Topbar
+          title="Portfolio dashboard"
+          eyebrow="Risk operations"
+          userLabel={userLabel}
+          description="The dashboard is still available, but its live portfolio data is reconnecting."
+        />
+        <ServerErrorState
+          title="Dashboard metrics could not be loaded right now."
+          description="The portfolio overview, chart data, and watchlist are temporarily unavailable. This fallback keeps the app stable while the backend finishes reconnecting."
+          retryHref={`/dashboard?mode=${mode}`}
+          secondaryHref="/settings"
+          secondaryLabel="Open settings"
+        />
+      </section>
+    );
+  }
 
   return (
     <section className="pb-10">
       <Topbar
         title="Portfolio dashboard"
         eyebrow="Risk operations"
-        userLabel={user.full_name}
+        userLabel={userLabel}
         description="Follow the portfolio journey from intake, scoring, and segmentation to recovery visibility. Every headline metric and chart now explains what it means and why it matters."
       />
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">

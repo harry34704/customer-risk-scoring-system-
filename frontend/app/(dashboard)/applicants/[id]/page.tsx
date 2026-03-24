@@ -3,7 +3,9 @@ import { ScoreBreakdown } from "@/components/applicants/score-breakdown";
 import { Topbar } from "@/components/layout/topbar";
 import { Card } from "@/components/ui/card";
 import { RiskBadge } from "@/components/ui/risk-badge";
+import { ServerErrorState } from "@/components/ui/server-error-state";
 import { SectionHeading } from "@/components/ui/section-heading";
+import { rethrowIfNavigationError } from "@/lib/next-navigation-error";
 import { fetchServerJson } from "@/lib/server-api";
 import { fetchUserProfile } from "@/lib/server-data";
 import { type ApplicantDetailResponse } from "@/lib/types";
@@ -12,10 +14,36 @@ import { formatCurrency, formatPercent, titleCase } from "@/lib/utils";
 export const dynamic = "force-dynamic";
 
 export default async function ApplicantDetailPage({ params }: { params: { id: string } }) {
-  const [user, detail] = await Promise.all([
-    fetchUserProfile(),
-    fetchServerJson<ApplicantDetailResponse>(`/applicants/${params.id}`)
-  ]);
+  let userLabel = "Workspace assistance";
+  let detail: ApplicantDetailResponse | null = null;
+
+  try {
+    const user = await fetchUserProfile();
+    userLabel = user.full_name;
+    detail = await fetchServerJson<ApplicantDetailResponse>(`/applicants/${params.id}`);
+  } catch (error) {
+    rethrowIfNavigationError(error);
+  }
+
+  if (!detail) {
+    return (
+      <section className="pb-10">
+        <Topbar
+          title="Applicant detail"
+          eyebrow="Applicant detail"
+          userLabel={userLabel}
+          description="The applicant profile is available, but the live detail payload is reconnecting."
+        />
+        <ServerErrorState
+          title="This applicant record could not be loaded right now."
+          description="Score breakdowns, payment history, and audit events are temporarily unavailable. Once the backend responds again, this view will recover without needing any data changes."
+          retryHref={`/applicants/${params.id}`}
+          secondaryHref="/applicants"
+          secondaryLabel="Back to applicants"
+        />
+      </section>
+    );
+  }
 
   const deterministic = detail.scores.find((score) => score.mode === "deterministic");
   const logistic = detail.scores.find((score) => score.mode === "logistic");
@@ -26,7 +54,7 @@ export default async function ApplicantDetailPage({ params }: { params: { id: st
       <Topbar
         title={`${detail.applicant.first_name} ${detail.applicant.last_name}`}
         eyebrow="Applicant detail"
-        userLabel={user.full_name}
+        userLabel={userLabel}
         description="Inspect the customer profile, compare deterministic and logistic scores, and follow the audit trail behind every scoring or update event."
       />
 

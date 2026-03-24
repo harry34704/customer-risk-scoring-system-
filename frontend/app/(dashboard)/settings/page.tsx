@@ -1,8 +1,10 @@
 import { ThemeSwitcher } from "@/components/theme/theme-switcher";
 import { Topbar } from "@/components/layout/topbar";
 import { Card } from "@/components/ui/card";
+import { ServerErrorState } from "@/components/ui/server-error-state";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { WorkspaceBootstrapCard } from "@/components/workspace/workspace-bootstrap-card";
+import { rethrowIfNavigationError } from "@/lib/next-navigation-error";
 import { fetchServerJson } from "@/lib/server-api";
 import { fetchUserProfile } from "@/lib/server-data";
 import { type SettingsResponse } from "@/lib/types";
@@ -10,17 +12,43 @@ import { type SettingsResponse } from "@/lib/types";
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
-  const [user, settings] = await Promise.all([
-    fetchUserProfile(),
-    fetchServerJson<SettingsResponse>("/settings")
-  ]);
+  let userLabel = "Workspace assistance";
+  let settings: SettingsResponse | null = null;
+
+  try {
+    const user = await fetchUserProfile();
+    userLabel = user.full_name;
+    settings = await fetchServerJson<SettingsResponse>("/settings");
+  } catch (error) {
+    rethrowIfNavigationError(error);
+  }
+
+  if (!settings) {
+    return (
+      <section className="pb-10">
+        <Topbar
+          title="Settings"
+          eyebrow="Environment and handoff"
+          userLabel={userLabel}
+          description="The settings area is available, but the live workspace metadata is reconnecting."
+        />
+        <ServerErrorState
+          title="Settings could not be loaded right now."
+          description="Workspace counts, theme metadata, demo credentials, and handoff notes are temporarily unavailable. The page stays usable while the backend reconnects."
+          retryHref="/settings"
+          secondaryHref="/dashboard"
+          secondaryLabel="Back to dashboard"
+        />
+      </section>
+    );
+  }
 
   return (
     <section className="pb-10">
       <Topbar
         title="Settings"
         eyebrow="Environment and handoff"
-        userLabel={user.full_name}
+        userLabel={userLabel}
         description="Review workspace readiness, switch portfolio themes, understand the scoring logic, and hand the product to a stakeholder with clear operating notes."
       />
 

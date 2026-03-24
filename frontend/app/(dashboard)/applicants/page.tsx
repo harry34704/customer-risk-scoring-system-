@@ -8,8 +8,10 @@ import { Input } from "@/components/ui/input";
 import { ModeSwitch } from "@/components/ui/mode-switch";
 import { RiskBadge } from "@/components/ui/risk-badge";
 import { Select } from "@/components/ui/select";
+import { ServerErrorState } from "@/components/ui/server-error-state";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { WorkspaceBootstrapCard } from "@/components/workspace/workspace-bootstrap-card";
+import { rethrowIfNavigationError } from "@/lib/next-navigation-error";
 import { fetchServerJson } from "@/lib/server-api";
 import { fetchUserProfile } from "@/lib/server-data";
 import { type ApplicantListResponse, type RiskMode } from "@/lib/types";
@@ -33,17 +35,43 @@ export default async function ApplicantsPage({
     ...(band ? { band } : {})
   });
 
-  const [user, applicants] = await Promise.all([
-    fetchUserProfile(),
-    fetchServerJson<ApplicantListResponse>(`/applicants?${query.toString()}`)
-  ]);
+  let userLabel = "Workspace assistance";
+  let applicants: ApplicantListResponse | null = null;
+
+  try {
+    const user = await fetchUserProfile();
+    userLabel = user.full_name;
+    applicants = await fetchServerJson<ApplicantListResponse>(`/applicants?${query.toString()}`);
+  } catch (error) {
+    rethrowIfNavigationError(error);
+  }
+
+  if (!applicants) {
+    return (
+      <section className="pb-10">
+        <Topbar
+          title="Applicants"
+          eyebrow="Manual review queue"
+          userLabel={userLabel}
+          description="The review queue is available, but the live applicant list is reconnecting."
+        />
+        <ServerErrorState
+          title="Applicants could not be loaded right now."
+          description="Search results, score bands, and record details are temporarily unavailable. The page will recover automatically once the backend returns the applicant feed."
+          retryHref={query.toString() ? `/applicants?${query.toString()}` : "/applicants"}
+          secondaryHref="/imports"
+          secondaryLabel="Open imports"
+        />
+      </section>
+    );
+  }
 
   return (
     <section className="pb-10">
       <Topbar
         title="Applicants"
         eyebrow="Manual review queue"
-        userLabel={user.full_name}
+        userLabel={userLabel}
         description="Search, filter, and inspect scored applicants, then add new names manually or route users to the CSV schema when they need bulk intake."
       />
 
