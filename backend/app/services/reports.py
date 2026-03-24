@@ -13,10 +13,11 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.models import Applicant
 from app.schemas.reports import ReportSummary
+from app.services._serialization import safe_band, safe_datetime, safe_email, safe_float, safe_text
 
 
 def _latest_score(applicant: Applicant, mode: str):
-    for score in applicant.risk_scores:
+    for score in getattr(applicant, "risk_scores", []) or []:
         if score.mode == mode:
             return score
     return None
@@ -41,17 +42,17 @@ def _report_rows(session: Session, mode: str, owner_user_id: str) -> list[dict]:
             continue
         rows.append(
             {
-                "external_id": applicant.external_id,
-                "name": f"{applicant.first_name} {applicant.last_name}",
-                "email": applicant.email,
-                "region": applicant.region,
-                "employment_status": applicant.employment_status,
-                "annual_income": applicant.financials.annual_income,
-                "requested_amount": applicant.financials.requested_amount,
-                "score": latest_score.raw_score,
-                "band": latest_score.band,
-                "probability_default": latest_score.probability_default,
-                "created_at": applicant.created_at.strftime("%Y-%m-%d"),
+                "external_id": safe_text(applicant.external_id, "unknown-external-id"),
+                "name": f"{safe_text(applicant.first_name, 'Unknown')} {safe_text(applicant.last_name, 'Applicant')}",
+                "email": safe_email(applicant.email),
+                "region": safe_text(applicant.region, "Unknown region"),
+                "employment_status": safe_text(applicant.employment_status, "Unknown"),
+                "annual_income": safe_float(applicant.financials.annual_income),
+                "requested_amount": safe_float(applicant.financials.requested_amount),
+                "score": safe_float(latest_score.raw_score),
+                "band": safe_band(latest_score.band),
+                "probability_default": safe_float(latest_score.probability_default),
+                "created_at": safe_datetime(applicant.created_at).strftime("%Y-%m-%d"),
             }
         )
     rows.sort(key=lambda item: item["score"], reverse=True)

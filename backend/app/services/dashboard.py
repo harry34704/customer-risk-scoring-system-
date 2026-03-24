@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.models import Applicant
 from app.schemas.applicant import ApplicantListItem
 from app.schemas.dashboard import DashboardOverview, LossExposureItem, MetricCard, SeriesPoint
+from app.services._serialization import safe_band, safe_date, safe_datetime, safe_email, safe_float, safe_text
 
 
 def _month_label(value: date) -> str:
@@ -17,7 +18,7 @@ def _month_label(value: date) -> str:
 
 
 def _latest_score(applicant: Applicant, mode: str):
-    for score in applicant.risk_scores:
+    for score in getattr(applicant, "risk_scores", []) or []:
         if score.mode == mode:
             return score
     return None
@@ -27,20 +28,23 @@ def _serialize_applicant_summary(applicant: Applicant, mode: str) -> Optional[Ap
     latest_score = _latest_score(applicant, mode)
     if latest_score is None or applicant.financials is None:
         return None
-    return ApplicantListItem(
-        id=applicant.id,
-        external_id=applicant.external_id,
-        full_name=f"{applicant.first_name} {applicant.last_name}",
-        email=applicant.email,
-        region=applicant.region,
-        employment_status=applicant.employment_status,
-        requested_amount=applicant.financials.requested_amount,
-        annual_income=applicant.financials.annual_income,
-        latest_band=latest_score.band,
-        latest_score=latest_score.raw_score,
-        latest_probability_default=latest_score.probability_default,
-        created_at=applicant.created_at,
-    )
+    try:
+        return ApplicantListItem(
+            id=safe_text(applicant.id, ""),
+            external_id=safe_text(applicant.external_id, "unknown-external-id"),
+            full_name=f"{safe_text(applicant.first_name, 'Unknown')} {safe_text(applicant.last_name, 'Applicant')}",
+            email=safe_email(applicant.email),
+            region=safe_text(applicant.region, "Unknown region"),
+            employment_status=safe_text(applicant.employment_status, "Unknown"),
+            requested_amount=safe_float(applicant.financials.requested_amount),
+            annual_income=safe_float(applicant.financials.annual_income),
+            latest_band=safe_band(latest_score.band),
+            latest_score=safe_float(latest_score.raw_score),
+            latest_probability_default=safe_float(latest_score.probability_default),
+            created_at=safe_datetime(applicant.created_at),
+        )
+    except Exception:
+        return None
 
 
 def fetch_dashboard_overview(session: Session, mode: str, owner_user_id: str) -> DashboardOverview:
@@ -66,10 +70,12 @@ def fetch_dashboard_overview(session: Session, mode: str, owner_user_id: str) ->
     total = len(summaries)
     average_score = (sum(item.latest_score for item in summaries) / total) if total else 0.0
     high_risk_count = sum(1 for item in summaries if item.latest_band == "high")
-    all_payments = [payment for applicant in applicants for payment in applicant.payment_history]
+    all_payments = [payment for applicant in applicants for payment in (getattr(applicant, "payment_history", []) or [])]
+    total_due = sum(safe_float(payment.amount_due) for payment in all_payments)
+    total_paid = sum(safe_float(payment.amount_paid) for payment in all_payments)
     recovery_ratio = (
-        sum(payment.amount_paid for payment in all_payments) / sum(payment.amount_due for payment in all_payments)
-        if all_payments and sum(payment.amount_due for payment in all_payments)
+        total_paid / total_due
+        if all_payments and total_due
         else 0.0
     )
 
@@ -79,14 +85,16 @@ def fetch_dashboard_overview(session: Session, mode: str, owner_user_id: str) ->
 
     defaults_by_month = defaultdict(float)
     for payment in all_payments:
-        if payment.status == "defaulted":
-            defaults_by_month[payment.payment_month.replace(day=1)] += 1
+        payment_month = safe_date(getattr(payment, "payment_month", None))
+        if safe_text(getattr(payment, "status", None), "").lower() == "defaulted" and payment_month is not None:
+            defaults_by_month[payment_month.replace(day=1)] += 1
 
     recovery_by_segment = defaultdict(lambda: {"paid": 0.0, "due": 0.0})
     for applicant in applicants:
-        for payment in applicant.payment_history:
-            recovery_by_segment[applicant.region]["paid"] += payment.amount_paid
-            recovery_by_segment[applicant.region]["due"] += payment.amount_due
+        region = safe_text(getattr(applicant, "region", None), "Unknown region")
+        for payment in getattr(applicant, "payment_history", []) or []:
+            recovery_by_segment[region]["paid"] += safe_float(payment.amount_paid)
+            recovery_by_segment[region]["due"] += safe_float(payment.amount_due)
 
     score_trend = defaultdict(list)
     for summary in summaries:
@@ -99,20 +107,20 @@ def fetch_dashboard_overview(session: Session, mode: str, owner_user_id: str) ->
         if summary is None:
             continue
         amount_lost = round(
-            sum(max(payment.amount_due - payment.amount_paid, 0.0) for payment in applicant.payment_history),
+            sum(max(safe_float(payment.amount_due) - safe_float(payment.amount_paid), 0.0) for payment in applicant.payment_history),
             2,
         )
         if amount_lost <= 0:
             continue
         loss_watchlist.append(
             LossExposureItem(
-                applicant_id=applicant.id,
+                applicant_id=safe_text(applicant.id, ""),
                 full_name=summary.full_name,
                 region=summary.region,
                 employment_status=summary.employment_status,
                 amount_lost=amount_lost,
-                latest_band=summary.latest_band,
-                latest_score=summary.latest_score,
+                latest_band=safe_band(summary.latest_band),
+                latest_score=safe_float(summary.latest_score),
             )
         )
     loss_watchlist.sort(key=lambda item: item.amount_lost, reverse=True)
