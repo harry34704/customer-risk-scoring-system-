@@ -21,7 +21,7 @@ export function Topbar({
         <Badge>{eyebrow}</Badge>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <h2 className="text-4xl font-semibold tracking-tight text-[color:var(--foreground)]">{title}</h2>
-          <InfoTooltip label={`About ${title}`}>
+          <InfoTooltip label={`About ${title}`} align="start">
             This workspace is designed to help analysts understand how portfolio risk is created, explained, and operationalized across imports, scoring, review, and reporting.
           </InfoTooltip>
         </div>

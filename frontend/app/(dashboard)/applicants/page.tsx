@@ -106,7 +106,7 @@ export default async function ApplicantsPage({
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.3fr_0.9fr]">
-        <Card className="overflow-hidden">
+        <Card>
           <SectionHeading
             title="Applicant list"
             description={`${applicants.total} records in the current view. Use the list to prioritize who needs explanation, intervention, or follow-up.`}

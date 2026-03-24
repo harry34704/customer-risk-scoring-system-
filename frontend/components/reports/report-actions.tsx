@@ -29,14 +29,18 @@ export function ReportActions({ mode }: { mode: RiskMode }) {
           <Download className="h-4 w-4" />
           {downloading === "csv" ? "Downloading..." : "Export CSV"}
         </Button>
-        <InfoTooltip label="About CSV export">CSV is designed for spreadsheet analysis, filters, pivots, and portfolio handoff to other operational tools.</InfoTooltip>
+        <InfoTooltip label="About CSV export" align="end">
+          CSV is designed for spreadsheet analysis, filters, pivots, and portfolio handoff to other operational tools.
+        </InfoTooltip>
       </div>
       <div className="flex items-center gap-2">
         <Button className="gap-2" onClick={() => void handleDownload("pdf")}>
           <Download className="h-4 w-4" />
           {downloading === "pdf" ? "Downloading..." : "Export PDF"}
         </Button>
-        <InfoTooltip label="About PDF export">PDF is designed for presentation and stakeholder review when you need a cleaner summary of the current portfolio state.</InfoTooltip>
+        <InfoTooltip label="About PDF export" align="end">
+          PDF is designed for presentation and stakeholder review when you need a cleaner summary of the current portfolio state.
+        </InfoTooltip>
       </div>
     </div>
   );

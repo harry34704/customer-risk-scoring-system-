@@ -91,7 +91,7 @@ export function RulesEditor({ initialRules }: { initialRules: ScoringRule[] }) {
   return (
     <div className="space-y-4">
       {rules.map((rule, index) => (
-        <Card key={rule.id} className="overflow-hidden">
+        <Card key={rule.id}>
           <div className="grid gap-6 xl:grid-cols-[1.2fr_1fr_220px]">
             <div>
               <div className="flex flex-wrap items-center gap-2">
